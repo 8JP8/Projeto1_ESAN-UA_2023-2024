@@ -1,0 +1,20 @@
+##########################
+settings.ini configuração
+##########################
+
+# Criar objeto de configuração
+config = configparser.ConfigParser()
+
+#Ler Ficheiro de configuração
+config.read('config.ini')
+
+# Accessar valores
+api_key = config.get('Credentials', 'api_key')
+database_url = config.get('Database', 'database_url')
+
+# Alterar numa config chamada Credentials a api_key para new_api_key
+config.set('Credentials', 'api_key', 'new_api_key')
+
+# Salvar alterações
+with open('config.ini', 'w') as config_file:
+    config.write(config_file)

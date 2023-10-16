@@ -1,0 +1,5 @@
+- Meter a Função do Video e da Câmara a Atualizar numa Thread e atualizar a GUI constantemente
+- Meter o resto das configs
+- Ativar UI
+- Atualizar UI para meter um botão de PARAR quando está a passar o video
+- Salvar o Conteúdo do Vídeo em frames ou quando terminar a análise gravar temporariamente para depois o user decidir se quer gravar e onde
