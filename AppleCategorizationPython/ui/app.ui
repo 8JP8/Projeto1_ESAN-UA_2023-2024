@@ -38,7 +38,7 @@
   </property>
   <property name="windowIcon">
    <iconset>
-    <normaloff>apple.ico</normaloff>apple.ico</iconset>
+    <normaloff>../apple.ico</normaloff>../apple.ico</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
    <property name="sizePolicy">
@@ -112,7 +112,7 @@
       </property>
      </item>
     </widget>
-    <widget class="QSlider" name="threashold1_SLIDER">
+    <widget class="QSlider" name="threshold1_SLIDER">
      <property name="geometry">
       <rect>
        <x>400</x>
@@ -143,7 +143,7 @@
       <number>10</number>
      </property>
     </widget>
-    <widget class="QSlider" name="threashold2_SLIDER">
+    <widget class="QSlider" name="threshold2_SLIDER">
      <property name="geometry">
       <rect>
        <x>400</x>
@@ -240,11 +240,6 @@
        <string>YOLO_V4 TINY</string>
       </property>
      </item>
-     <item>
-      <property name="text">
-       <string>CIRCLES</string>
-      </property>
-     </item>
     </widget>
     <widget class="QLabel" name="modoslb">
      <property name="geometry">
@@ -276,7 +271,7 @@
      <property name="geometry">
       <rect>
        <x>610</x>
-       <y>7</y>
+       <y>8</y>
        <width>40</width>
        <height>20</height>
       </rect>
@@ -327,6 +322,23 @@
       </property>
      </item>
     </widget>
+    <widget class="QPushButton" name="colorfilters_BT">
+     <property name="geometry">
+      <rect>
+       <x>561</x>
+       <y>7</y>
+       <width>30</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="icon">
+      <iconset>
+       <normaloff>icons/colour.ico</normaloff>icons/colour.ico</iconset>
+     </property>
+    </widget>
    </widget>
    <widget class="QPushButton" name="start_BT">
     <property name="geometry">
@@ -338,7 +350,8 @@
      </rect>
     </property>
     <property name="text">
-     <string>INICIAR</string>
+     <string>INICIAR
+(Ctrl+I)</string>
     </property>
    </widget>
    <widget class="QPushButton" name="upload_BT">
@@ -632,9 +645,9 @@ border: 1px solid grey;</string>
     <addaction name="action_Logs"/>
     <addaction name="action_exportLogs"/>
    </widget>
-   <widget class="QMenu" name="menuHelp">
+   <widget class="QMenu" name="menuInfo">
     <property name="title">
-     <string>Ajuda</string>
+     <string>Info</string>
     </property>
    </widget>
    <widget class="QMenu" name="menuView">
@@ -647,7 +660,7 @@ border: 1px solid grey;</string>
    <addaction name="menuFile"/>
    <addaction name="menuView"/>
    <addaction name="menuLogs"/>
-   <addaction name="menuHelp"/>
+   <addaction name="menuInfo"/>
   </widget>
   <action name="actionOpen_Upload">
    <property name="icon">
