@@ -37,3 +37,11 @@ def VideoProcessor(vd_filepath, frame):
             return (True, newframe)
         except:
             return(False, f"Erro: Não foi possível abrir o ficheiro '{os.path.basename(vd_filepath)}'.")
+        
+def CameraProcessor(self, inputframe):
+    # Detect and classify apples and update the frame
+    try:
+        frame = code_v1.detect_and_classify_apples(inputframe, "camera")
+    except:
+        return(False, f"Erro: O processamento de frames falhou.")
+    return (True, frame)

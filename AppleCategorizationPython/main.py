@@ -1,14 +1,9 @@
-from PyQt6.QtWidgets import QApplication, QMainWindow, QMessageBox, QTabWidget
+from PyQt6.QtWidgets import QApplication, QMainWindow, QMessageBox, QFileDialog, QApplication, QPushButton, QVBoxLayout, QLabel, QDialog, QWidget, QTabWidget
 from PyQt6.uic import loadUi
-from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtWidgets import QFileDialog, QApplication, QGridLayout, QPushButton, QStyle, QWidget, QMenu
+from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtGui import QImage, QPixmap, QIcon, QCloseEvent, QAction, QKeySequence, QShortcut
-from keras.models import load_model
-from keras.preprocessing.image import img_to_array
-from keras.applications.mobilenet_v2 import preprocess_input
 import numpy as np
 import threading
-import shutil
 import subprocess
 import time
 import os
@@ -26,16 +21,22 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 config = configparser.ConfigParser()
 config.read('config.ini')  # Replace 'config.ini' with the path to your configuration file
 
-class MyApp(QMainWindow):
-    def __init__(self):
+
+# CONFIG GLOBAL VARIABLES
+USE_TWO_CAMERAS = config.getboolean('CAMERA_CONFIG', 'USE_TWO_CAMERAS')
+CAMERA_INDEX_LEFT = config.getint('CAMERA_CONFIG', 'CAMERA_INDEX_LEFT')    # Camera index for the left camera (if using two cameras)
+CAMERA_INDEX_RIGHT = config.getint('CAMERA_CONFIG', 'CAMERA_INDEX_RIGHT')
+
+class MyApp(QMainWindow):                     #GUI CLASS
+    def __init__(self):                       # CONSTRUCTOR
         super (MyApp, self).__init__()
-        loadUi('app.ui', self)
+        loadUi('ui/app.ui', self)
         app.setWindowIcon(QIcon('apple.ico'))
         self.pid = QApplication.applicationPid()
         
         # ============ INICIALIZAÇÃO COM OS VALORES DA CONFIG ============
-        self.threashold1_SLIDER.setValue(config.getint('DETECTION_CONFIG', 'threashold1_value'))
-        self.threashold2_SLIDER.setValue(config.getint('DETECTION_CONFIG', 'threashold2_value'))
+        self.threshold1_SLIDER.setValue(config.getint('DETECTION_CONFIG', 'threshold1_value'))
+        self.threshold2_SLIDER.setValue(config.getint('DETECTION_CONFIG', 'threshold2_value'))
         self.mode_COMBOBOX.setCurrentIndex(config.getint('DETECTION_CONFIG', 'mode_value'))
         self.detectionmode_COMBOBOX.setCurrentIndex(config.getint('DETECTION_CONFIG', 'detectionmode_value'))
         self.categorizationmode_COMBOBOX.setCurrentIndex(config.getint('DETECTION_CONFIG', 'categorizationmode_value'))
@@ -44,8 +45,9 @@ class MyApp(QMainWindow):
 
         # ============ BINDS ============
         self.upload_BT.clicked.connect(self.load_file)
-        self.start_BT.setShortcut("Ctrl+Enter")
-        self.start_BT.clicked.connect(self.start)
+        self.start_BT.setShortcut(QKeySequence.fromString("Ctrl+I"))
+        self.start_BT.clicked.connect(self.start_cameracapture)
+        self.colorfilters_BT.clicked.connect(self.colorfilters_open)
         self.actionOpen_Upload.setShortcuts([QKeySequence.fromString("Ctrl+O"), QKeySequence.fromString("Ctrl+A")])
         self.actionOpen_Upload.triggered.connect(self.load_file)
         self.actionSave_Output_File.triggered.connect(self.save_file)
@@ -61,9 +63,9 @@ class MyApp(QMainWindow):
         self.action_exportLogs.triggered.connect(self.logs_save)
         self.action_Logs.setShortcut("Ctrl+L")
         self.action_exportLogs.setShortcut("Ctrl+Shift+L")
-        self.menuHelp.aboutToShow.connect(self.help_open)
-        self.threashold1_SLIDER.valueChanged.connect(self.update_config)
-        self.threashold2_SLIDER.valueChanged.connect(self.update_config)
+        self.menuInfo.aboutToShow.connect(self.info_open)
+        self.threshold1_SLIDER.valueChanged.connect(self.update_config)
+        self.threshold2_SLIDER.valueChanged.connect(self.update_config)
         self.mode_COMBOBOX.currentIndexChanged.connect(self.update_config)
         self.detectionmode_COMBOBOX.currentIndexChanged.connect(self.update_config)
         self.categorizationmode_COMBOBOX.currentIndexChanged.connect(self.update_config)
@@ -77,8 +79,10 @@ class MyApp(QMainWindow):
         self.createShortcut(shortcut_down, self.moveTabDown)
         # ============ \\-// ============
         self.videoplaying = False
+        self.camopen = False
         self.thread_stop_flag = False
         self.filename = str()
+        # ============ \\-// ============
 
     def createShortcut(self, key_sequence, slot_function):
         shortcut = key_sequence
@@ -99,7 +103,7 @@ class MyApp(QMainWindow):
 
     def load_file(self): #FUNCTION TO OPEN THE IMAGE SELECTOR AND SELECT THE IMAGE
         if self.videoplaying:
-            self.show_warning("Está a ser processado vídeo: Carregue PARAR (Ctrl+Enter) ou feche a App.")
+            self.show_warning("Está a ser processado vídeo: Carregue PARAR (Ctrl+P) ou feche a App.")
         else:
             self.filename = QFileDialog.getOpenFileName(
                 filter = "Ficheiros Suportados (*.jpg *.jpeg *.png *.bmp *.tiff *.tif *.gif *.pbm *.pgm *.ppm *.xbm *.xpm *.sr *.webp *.avi *.mov *.mp4 *.mkv *.wmv *.flv *.3gp *.asf *.mpg *.rm);;Ficheiros de Imagem (*.jpg *.jpeg *.png *.bmp *.tiff *.tif *.gif *.pbm *.pgm *.ppm *.xbm *.xpm *.sr *.webp);;Ficheiros de Vídeo (*.avi *.mov *.mp4 *.mkv *.wmv *.flv *.3gp *.asf *.mpg *.rm);;Todos os Ficheiros (*)")[0]
@@ -117,55 +121,60 @@ class MyApp(QMainWindow):
             if len(self.filename)!=0:
                 # ============= OLD RESIZE CODE TO FIT THE IMAGE ============ →→→→→→→→→→→→  frame = imutils.resize(image, width=self.inputframe_1.width, height=self.inputframe_1.height)
                 # ========= CALCULATIONS TO KEEP IMAGE ASPECT RATIO =========
-                width_scale = int(self.inputframe_1.width()) / image.shape[1]
-                height_scale = int(self.inputframe_1.height()) / image.shape[0]
-                scale = min(width_scale, height_scale)
-                frame = cv2.resize(image, (int(image.shape[1] * scale), int(image.shape[0] * scale)))
+                width_scalei = int(self.inputframe_1.width()) / image.shape[1]
+                height_scalei = int(self.inputframe_1.height()) / image.shape[0]
+                scalei = min(width_scalei, height_scalei)
+                framei = cv2.resize(image, (int(image.shape[1] * scalei), int(image.shape[0] * scalei)))
                 # ======== CALCULATIONS TO KEEP IMAGE ASPECT RATIO 2 ========
-                width_scale2 = int(self.inputframe_3.width()) / image.shape[1]
-                height_scale2 = int(self.inputframe_3.height()) / image.shape[0]
-                scale2 = min(width_scale2, height_scale2)
-                frame2 = cv2.resize(image, (int(image.shape[1] * scale2), int(image.shape[0] * scale2)))
+                width_scale2i = int(self.inputframe_3.width()) / image.shape[1]
+                height_scale2i = int(self.inputframe_3.height()) / image.shape[0]
+                scale2i = min(width_scale2i, height_scale2i)
+                frame2i = cv2.resize(image, (int(image.shape[1] * scale2i), int(image.shape[0] * scale2i)))
                 # ====================== CENTER THE IMAGE ====================== 
-                emptyframe = np.full((self.inputframe_1.height(), self.inputframe_1.width(), 3), (255, 255, 255), dtype=np.uint8) # Create an empty frame with the frame dimensions
-                x_offset = (self.inputframe_1.width() - frame.shape[1]) // 2
-                y_offset = (self.inputframe_1.height() - frame.shape[0]) // 2
-                emptyframe[y_offset:y_offset+frame.shape[0], x_offset:x_offset+frame.shape[1]] = frame        # Paste the resized image onto the empty frame
+                emptyframei = np.full((self.inputframe_1.height(), self.inputframe_1.width(), 3), (255, 255, 255), dtype=np.uint8) # Create an empty frame with the frame dimensions
+                x_offseti = (self.inputframe_1.width() - framei.shape[1]) // 2
+                y_offseti = (self.inputframe_1.height() - framei.shape[0]) // 2
+                emptyframei[y_offseti:y_offseti+framei.shape[0], x_offseti:x_offseti+framei.shape[1]] = framei       # Paste the resized image onto the empty frame
                 # ====================== CENTER THE IMAGE ====================== 
-                emptyframe2 = np.full((self.inputframe_3.height(), self.inputframe_3.width(), 3), (255, 255, 255), dtype=np.uint8) # Create an empty frame with the frame dimensions
-                x_offset2 = (self.inputframe_3.width() - frame2.shape[1]) // 2
-                y_offset2 = (self.inputframe_3.height() - frame2.shape[0]) // 2
-                emptyframe2[y_offset2:y_offset2+frame2.shape[0], x_offset2:x_offset2+frame2.shape[1]] = frame2 
+                emptyframe2i = np.full((self.inputframe_3.height(), self.inputframe_3.width(), 3), (255, 255, 255), dtype=np.uint8) # Create an empty frame with the frame dimensions
+                x_offset2i = (self.inputframe_3.width() - frame2i.shape[1]) // 2
+                y_offset2i = (self.inputframe_3.height() - frame2i.shape[0]) // 2
+                emptyframe2i[y_offset2i:y_offset2i+frame2i.shape[0], x_offset2i:x_offset2i+frame2i.shape[1]] = frame2i
                 # ==================== CONVERT IMAGE FORMAT ====================
                 # ======================= UPDATE THE GUI =======================
-                image = QImage(emptyframe, emptyframe.shape[1],emptyframe.shape[0], emptyframe.strides[0],QImage.Format.Format_RGB888)
-                image2 = QImage(emptyframe2, emptyframe2.shape[1],emptyframe2.shape[0], emptyframe2.strides[0],QImage.Format.Format_RGB888)
-                self.inputframe_1.setPixmap(QPixmap.fromImage(image))
-                self.inputframe_3.setPixmap(QPixmap.fromImage(image2))
+                imagef = QImage(emptyframei, emptyframei.shape[1],emptyframei.shape[0], emptyframei.strides[0],QImage.Format.Format_RGB888)
+                imagef2 = QImage(emptyframe2i, emptyframe2i.shape[1],emptyframe2i.shape[0], emptyframe2i.strides[0],QImage.Format.Format_RGB888)
+                self.inputframe_1.setPixmap(QPixmap.fromImage(imagef))
+                self.inputframe_3.setPixmap(QPixmap.fromImage(imagef2))
                 # =========================== \\--// ===========================
-                processedimage = FrameProcessor.ImageProcessor(self.filename, frame)
+                processedimage = FrameProcessor.ImageProcessor(self.filename, image)
                 if not processedimage[0]:
                     self.show_warning(processedimage[1])
                 else:
                     # ===================== CENTER THE IMAGE =====================
-                    emptyframep = np.full((self.outputframe_1.height(), self.outputframe_1.width(), 3), (255, 255, 255), dtype=np.uint8) # Create an empty frame with the frame dimensions
-                    emptyframep[y_offset:y_offset+frame.shape[0], x_offset:x_offset+frame.shape[1]] = processedimage[1]                        # Paste the resized image onto the empty frame
-                    emptyframep2 = np.full((self.outputframe_3.height(), self.outputframe_3.width(), 3), (255, 255, 255), dtype=np.uint8) # Create an empty frame with the frame dimensions
-                    emptyframep2[y_offset2:y_offset2+frame2.shape[0], x_offset2:x_offset2+frame2.shape[1]] = processedimage[1]                        # Paste the resized image onto the empty frame
+                    framepi = cv2.resize(processedimage[1], (framei.shape[1], framei.shape[0]))
+                    framep2i = cv2.resize(processedimage[1], (frame2i.shape[1], frame2i.shape[0]))
+                    emptyframepi = np.full((self.outputframe_1.height(), self.outputframe_1.width(), 3), (255, 255, 255), dtype=np.uint8) # Create an empty frame with the frame dimensions
+                    emptyframepi[y_offseti:y_offseti+framei.shape[0], x_offseti:x_offseti+framei.shape[1]] = framepi                      # Paste the resized image onto the empty frame
+                    emptyframep2i = np.full((self.outputframe_3.height(), self.outputframe_3.width(), 3), (255, 255, 255), dtype=np.uint8)  # Create an empty frame with the frame dimensions
+                    emptyframep2i[y_offset2i:y_offset2i+frame2i.shape[0], x_offset2i:x_offset2i+frame2i.shape[1]] = framep2i                 # Paste the resized image onto the empty frame
                     # Paste the resized image onto the empty frame
                     # ======================== UPDATE THE GUI ========================
-                    imagep = QImage(emptyframep, emptyframep.shape[1],emptyframep.shape[0], emptyframep.strides[0],QImage.Format.Format_RGB888)
-                    imagep2 = QImage(emptyframep2, emptyframep2.shape[1],emptyframep2.shape[0], emptyframep2.strides[0],QImage.Format.Format_RGB888)
-                    self.outputframe_1.setPixmap(QPixmap.fromImage(imagep))
-                    self.outputframe_3.setPixmap(QPixmap.fromImage(imagep2))
+                    imagepi = QImage(emptyframepi, emptyframepi.shape[1],emptyframepi.shape[0], emptyframepi.strides[0],QImage.Format.Format_RGB888)
+                    imagep2i = QImage(emptyframep2i, emptyframep2i.shape[1],emptyframep2i.shape[0], emptyframep2i.strides[0],QImage.Format.Format_RGB888)
+                    self.outputframe_1.setPixmap(QPixmap.fromImage(imagepi))
+                    self.outputframe_3.setPixmap(QPixmap.fromImage(imagep2i))
                     # ============================ \\--// ============================
      
     # ======= VIDEO PROCESSING THREAD START AND CLOSE CODE =======  
     def closeEvent(self, event: QCloseEvent):
         self.thread_stop_flag = True
-        super().closeEvent(event)
+        self.colorfilters = ColorFilters()
+        self.colorfilters.close() #close filters widget when mainwindow closes
     def video_processing_thread(self, filename):
         self.set_video(filename)
+    def cameracapture_to_gui_thread(self):
+        self.cameracapture_to_gui()
     # ========================== \\--// ==========================
      
     def set_video(self, video):
@@ -177,7 +186,7 @@ class MyApp(QMainWindow):
         self.total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         # Create a VideoCapture object
         while not self.thread_stop_flag:
-            self.start_BT.setText("PARAR")
+            self.start_BT.setShortcut(QKeySequence.fromString("Ctrl+P"))
             ret, frame = cap.read()
             if not ret:
                 break  # Break the loop at the end of the video
@@ -236,23 +245,164 @@ class MyApp(QMainWindow):
                 # Update the GUI
                 self.outputframe_1.setPixmap(QPixmap.fromImage(videoframep))
                 self.outputframe_3.setPixmap(QPixmap.fromImage(videoframep2))
-        self.start_BT.setText("INICIAR")
+        self.start_BT.setText("INICIAR\n(Ctrl+I)")
+        self.start_BT.setShortcut(QKeySequence.fromString("Ctrl+I"))
         self.videoplaying = False
+        self.thread_stop_flag = False
         
-    def start(self):
+    def start_cameracapture(self):
         if self.videoplaying:
             self.thread_stop_flag = True #STOP VIDEO PLAYBACK / CAMERA PLAYBACK
+            if  self.camopen:
+                self.camopen = False
+            self.start_BT.setText("INICIAR\n(Ctrl+I)")
+            self.start_BT.setShortcut(QKeySequence.fromString("Ctrl+I"))
         else:
             #Camera Test
             # Try to access the default camera (usually the built-in webcam)
-            camera = cv2.VideoCapture(0)  # 0 represents the default camera
+            if USE_TWO_CAMERAS:
+                self.cap_left = cv2.VideoCapture(CAMERA_INDEX_LEFT)
+                self.cap_right = cv2.VideoCapture(CAMERA_INDEX_RIGHT)
+                return self.cap_left, self.cap_right
+            else:
+                self.camera = cv2.VideoCapture(0)  # 0 represents the default camera
             # Check if the camera was opened successfully
-            if camera.isOpened():
-                code_v1.initialize_camera()
-            # Release the camera when you're done
-            camera.release()
+            if self.camera.isOpened():
+                self.camopen = True
+                self.start_BT.setText("PARAR\n(Ctrl+P)")
+                self.start_BT.setShortcut(QKeySequence.fromString("Ctrl+P"))
+                print("Processamento de Frames Iniciado")
+                threading.Thread(target=self.cameracapture_to_gui_thread).start() #Updates the gui with camera feed
             
-        
+    def cameracapture_to_gui(self):
+        # Create a VideoCapture object
+        while not self.thread_stop_flag:
+            if USE_TWO_CAMERAS:
+                self.camera=self.cap_left.read()
+                ret_left, frame_left = self.cap_left.read()
+                ret_right, frame_right = self.cap_right.read()
+                # Calculate the scale and apply resizing
+                self.hsv_left = cv2.cvtColor(frame_left, cv2.COLOR_BGR2HSV)
+                frame = cv2.cvtColor(self.hsv_left, cv2.COLOR_HSV2RGB)
+                self.hsv_right = cv2.cvtColor(frame_right, cv2.COLOR_BGR2HSV)
+                frame_right = cv2.cvtColor(self.hsv_right, cv2.COLOR_HSV2RGB)
+                if not ret_left or not ret_right:
+                    break
+            else:
+                ret, frame = self.camera.read()
+                # Calculate the scale and apply resizing
+                self.hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+                frame = cv2.cvtColor(self.hsv, cv2.COLOR_HSV2RGB)
+                if not ret:
+                    break
+            self.start_BT.setShortcut(QKeySequence.fromString("Ctrl+P"))
+            if not ret:
+                break  # Break the loop at the end of the video
+            self.videoplaying = True #bool to stop uploads while playing
+            #############################################################
+            width_scale = int(self.inputframe_1.width()) / frame.shape[1]
+            height_scale = int(self.inputframe_1.height()) / frame.shape[0]
+            scale = min(width_scale, height_scale)
+            frameoriginal = frame
+            frame = cv2.resize(frame, (int(frame.shape[1] * scale), int(frame.shape[0] * scale)))
+            #Calculate the scale and apply resizing 2
+            width_scale2 = int(self.inputframe_3.width()) / frame.shape[1]
+            height_scale2 = int(self.inputframe_3.height()) / frame.shape[0]
+            scale2 = min(width_scale2, height_scale2)
+            frame2 = cv2.resize(frame, (int(frame.shape[1] * scale2), int(frame.shape[0] * scale2)))
+            # Center the image
+            emptyframe = np.full((self.inputframe_1.height(), self.inputframe_1.width(), 3), (255, 255, 255), dtype=np.uint8)
+            x_offset = (self.inputframe_1.width() - frame.shape[1]) // 2
+            y_offset = (self.inputframe_1.height() - frame.shape[0]) // 2
+            # Center the image 2
+            emptyframe2 = np.full((self.inputframe_3.height(), self.inputframe_3.width(), 3), (255, 255, 255), dtype=np.uint8)
+            x_offset2 = (self.inputframe_3.width() - frame2.shape[1]) // 2
+            y_offset2 = (self.inputframe_3.height() - frame2.shape[0]) // 2
+            if USE_TWO_CAMERAS:
+                frameoriginal2 = frame_right
+                frame3 = cv2.resize(frame_right, (int(frame.shape[1] * scale), int(frame.shape[0] * scale)))
+                frame4 = cv2.resize(frame_right, (int(frame.shape[1] * scale2), int(frame.shape[0] * scale2)))
+                #paste frames in empyframes
+                emptyframe3 = emptyframe
+                emptyframe4 = emptyframe2
+                emptyframe[y_offset:y_offset + frame.shape[0], x_offset:x_offset + frame.shape[1]] = frame
+                emptyframe2[y_offset2:y_offset2 + frame2.shape[0], x_offset2:x_offset2 + frame2.shape[1]] = frame2
+                emptyframe3[y_offset:y_offset + frame.shape[0], x_offset:x_offset + frame.shape[1]] = frame3
+                emptyframe4[y_offset2:y_offset2 + frame2.shape[0], x_offset2:x_offset2 + frame2.shape[1]] = frame4
+                # Convert image format
+                image = QImage(emptyframe, emptyframe.shape[1], emptyframe.shape[0], emptyframe.strides[0], QImage.Format.Format_RGB888)
+                image2 = QImage(emptyframe2, emptyframe2.shape[1], emptyframe2.shape[0], emptyframe2.strides[0], QImage.Format.Format_RGB888)
+                image3 = QImage(emptyframe3, emptyframe.shape[1], emptyframe.shape[0], emptyframe.strides[0], QImage.Format.Format_RGB888)
+                image4 = QImage(emptyframe4, emptyframe2.shape[1], emptyframe2.shape[0], emptyframe2.strides[0], QImage.Format.Format_RGB888)
+                # Update the GUI
+                self.inputframe_1.setPixmap(QPixmap.fromImage(image))
+                self.inputframe_3.setPixmap(QPixmap.fromImage(image2))
+                self.inputframe_2.setPixmap(QPixmap.fromImage(image3))
+                self.inputframe_4.setPixmap(QPixmap.fromImage(image4))
+                # Frame processing
+                processor_result = FrameProcessor.CameraProcessor(self, frameoriginal)
+                processor_result2 = FrameProcessor.CameraProcessor(self, frameoriginal2)
+                if not processor_result[0] or not processor_result2[0]:
+                    self.show_warning(processor_result[1])
+                else:
+                    # Ensure that processedvideoframe has the same dimensions as the target area
+                    processedvideoframe = cv2.resize(processor_result[1], (frame.shape[1], frame.shape[0]))
+                    processedvideoframe2 = cv2.resize(processor_result[1], (frame2.shape[1], frame2.shape[0]))
+                    processedvideoframe3 = cv2.resize(processor_result2[1], (frame.shape[1], frame.shape[0]))
+                    processedvideoframe4 = cv2.resize(processor_result2[1], (frame2.shape[1], frame2.shape[0]))
+                    # Create an empty frame with the target dimensions
+                    emptyframep3, emptyframep = np.full((self.outputframe_1.height(), self.outputframe_1.width(), 3), (255, 255, 255), dtype=np.uint8)
+                    emptyframep4, emptyframep2 = np.full((self.outputframe_3.height(), self.outputframe_3.width(), 3), (255, 255, 255), dtype=np.uint8)
+                    # Paste the resized frame onto the target area in emptyframep
+                    emptyframep[y_offset:y_offset + frame.shape[0], x_offset:x_offset + frame.shape[1]] = processedvideoframe
+                    emptyframep2[y_offset2:y_offset2 + frame2.shape[0], x_offset2:x_offset2 + frame2.shape[1]] = processedvideoframe2
+                    emptyframep3[y_offset:y_offset + frame.shape[0], x_offset:x_offset + frame.shape[1]] = processedvideoframe3
+                    emptyframep4[y_offset2:y_offset2 + frame2.shape[0], x_offset2:x_offset2 + frame2.shape[1]] = processedvideoframe4
+                    # Convert image format
+                    videoframep = QImage(emptyframep, emptyframep.shape[1], emptyframep.shape[0], emptyframep.strides[0], QImage.Format.Format_RGB888)
+                    videoframep2 = QImage(emptyframep2, emptyframep2.shape[1], emptyframep2.shape[0], emptyframep2.strides[0], QImage.Format.Format_RGB888)
+                    videoframep3 = QImage(emptyframep3, emptyframep.shape[1], emptyframep.shape[0], emptyframep.strides[0], QImage.Format.Format_RGB888)
+                    videoframep4 = QImage(emptyframep4, emptyframep2.shape[1], emptyframep2.shape[0], emptyframep2.strides[0], QImage.Format.Format_RGB888)
+                    # Update the GUI
+                    self.outputframe_1.setPixmap(QPixmap.fromImage(videoframep))
+                    self.outputframe_3.setPixmap(QPixmap.fromImage(videoframep2))
+                    self.outputframe_2.setPixmap(QPixmap.fromImage(videoframep3))
+                    self.outputframe_4.setPixmap(QPixmap.fromImage(videoframep4))
+            else:
+                emptyframe[y_offset:y_offset + frame.shape[0], x_offset:x_offset + frame.shape[1]] = frame
+                emptyframe2[y_offset2:y_offset2 + frame2.shape[0], x_offset2:x_offset2 + frame2.shape[1]] = frame2
+                image = QImage(emptyframe, emptyframe.shape[1], emptyframe.shape[0], emptyframe.strides[0], QImage.Format.Format_RGB888)
+                image2 = QImage(emptyframe2, emptyframe2.shape[1], emptyframe2.shape[0], emptyframe2.strides[0], QImage.Format.Format_RGB888)
+                self.inputframe_1.setPixmap(QPixmap.fromImage(image))
+                self.inputframe_3.setPixmap(QPixmap.fromImage(image2))
+                processor_result = FrameProcessor.CameraProcessor(self, frame)
+
+                if not processor_result[0]:
+                    self.show_warning(processor_result[1])
+                else:
+                    # Ensure that processedvideoframe has the same dimensions as the target area
+                    processedvideoframe = cv2.resize(processor_result[1], (frame.shape[1], frame.shape[0]))
+                    processedvideoframe2 = cv2.resize(processor_result[1], (frame2.shape[1], frame2.shape[0]))
+                    # Create an empty frame with the target dimensions
+                    emptyframep = np.full((self.outputframe_1.height(), self.outputframe_1.width(), 3), (255, 255, 255), dtype=np.uint8)
+                    emptyframep2 = np.full((self.outputframe_3.height(), self.outputframe_3.width(), 3), (255, 255, 255), dtype=np.uint8)
+                    # Paste the resized frame onto the target area in emptyframep
+                    emptyframep[y_offset:y_offset + frame.shape[0], x_offset:x_offset + frame.shape[1]] = processedvideoframe
+                    emptyframep2[y_offset2:y_offset2 + frame2.shape[0], x_offset2:x_offset2 + frame2.shape[1]] = processedvideoframe2
+                    # Convert image format
+                    videoframep = QImage(emptyframep, emptyframep.shape[1], emptyframep.shape[0], emptyframep.strides[0], QImage.Format.Format_RGB888)
+                    videoframep2 = QImage(emptyframep2, emptyframep2.shape[1], emptyframep2.shape[0], emptyframep2.strides[0], QImage.Format.Format_RGB888)
+                    # Update the GUI
+                    self.outputframe_1.setPixmap(QPixmap.fromImage(videoframep))
+                    self.outputframe_3.setPixmap(QPixmap.fromImage(videoframep2))
+
+        self.start_BT.setText("INICIAR\n(Ctrl+I)")
+        self.start_BT.setShortcut(QKeySequence.fromString("Ctrl+I"))
+        self.videoplaying = False
+        self.thread_stop_flag = False
+        # Release the camera when you're done
+        self.camera.release()
+
     def small_vw(self):
         self.stackedWidget.setCurrentIndex(0)
         self.resize(771, 584)
@@ -274,13 +424,18 @@ class MyApp(QMainWindow):
         else:
             print("Unsupported operating system: Cannot open the file.")
     
-    def help_open(self):    
-        return #não implementado
+    def colorfilters_open(self):    
+        self.colorfilters = ColorFilters()
+        self.colorfilters.show()
+
+    def info_open(self):    
+        info_dialog = AboutDialog()
+        info_dialog.exec()
     
     def update_config(self):
-
-        config.set('DETECTION_CONFIG', 'threashold1_value', str(self.threashold1_SLIDER.value()))
-        config.set('DETECTION_CONFIG', 'threashold2_value', str(self.threashold2_SLIDER.value()))
+        
+        config.set('DETECTION_CONFIG', 'threshold1_value', str(self.threshold1_SLIDER.value()))
+        config.set('DETECTION_CONFIG', 'threshold2_value', str(self.threshold2_SLIDER.value()))
         config.set('DETECTION_CONFIG', 'mode_value', str(self.mode_COMBOBOX.currentIndex()))
         config.set('DETECTION_CONFIG', 'detectionmode_value', str(self.detectionmode_COMBOBOX.currentIndex()))
         config.set('DETECTION_CONFIG', 'categorizationmode_value', str(self.categorizationmode_COMBOBOX.currentIndex()))
@@ -311,6 +466,59 @@ class MyApp(QMainWindow):
         msg_box.exec()
 
 # =========================== \\---// ===========================
+class ColorFilters(QWidget):
+    def __init__(self):
+        super().__init__()
+        # Load the widget UI file
+        loadUi('ui/filters.ui', self)
+
+class AboutDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Informações")
+        self.setMinimumWidth(300)  # Adjust the width as needed
+
+        # Create a label for the image
+        image_label = QLabel()
+        pixmap = QPixmap("ui/icons/apple.png")  # Replace with the path to your image
+
+        # Resize the image
+        #new_width = 200  # Adjust the width as needed
+        #new_height = 150  # Adjust the height as needed
+        #pixmap = pixmap.scaled(new_width, new_height, Qt.AspectRatioMode.KeepAspectRatio)
+
+        image_label.setPixmap(pixmap)
+        image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        # Add a paragraph to explain the keys
+        keys_paragraph = QLabel(
+            "Key Shortcuts:\n\n"
+            "Iniciar/Parar - Ctrl+I ou Ctrl+P\n"
+            "Abrir/Carregar - Ctrl+O ou Ctrl+A\n"
+            "Guardar - Ctrl+S ou Ctrl+G\n"
+            "Vista Pequena - Ctrl+Left\n"
+            "Vista Grande - Ctrl+Right\n"
+            "Ver Logs - Ctrl+L\n"
+            "Exportar Logs - Ctrl+Shift+L"
+        )
+
+        # Add the copyright text
+        copyright_text = QLabel("Copyright © JBC 2023")
+        copyright_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        # Create a layout for the dialog
+        layout = QVBoxLayout()
+        layout.addWidget(image_label)
+        layout.addWidget(keys_paragraph)
+        layout.addWidget(copyright_text)
+
+        # Add the "OK" button
+        ok_button = QPushButton("OK")
+        ok_button.clicked.connect(self.accept)
+        layout.addWidget(ok_button)
+
+        self.setLayout(layout)
+
 
  # Save the changes
 with open('config.ini', 'w') as config_file:
@@ -320,6 +528,7 @@ with open('config.ini', 'w') as config_file:
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     my_app = MyApp()
+    cfwidget = ColorFilters()
     my_app.show()
     sys.exit(app.exec())
 # ============= \\-// =============

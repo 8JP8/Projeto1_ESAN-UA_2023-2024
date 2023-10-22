@@ -6,6 +6,7 @@ from keras.applications.mobilenet_v2 import preprocess_input
 import configparser
 import datetime
 import os
+from modules import MathFunctions
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
@@ -15,21 +16,25 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 config = configparser.ConfigParser()
 config.read('../config.ini')
 
-output_dir = '../outputs'
-os.makedirs(output_dir, exist_ok=True)
+#output_dir = '../outputs'
+#os.makedirs(output_dir, exist_ok=True)
 
 global USE_TWO_CAMERAS,CAMERA_INDEX_LEFT,CAMERA_INDEX_RIGHT,CAMERA_PRESENT,PIXEL_SEPARATION,DIAMETER_SEPARATION, DETECTIONMODE_VALUE, CATEGORIZATIONMODE_VALUE
 
 # Variable Configuration
-USE_TWO_CAMERAS = config.get('CAMERA_CONFIG', 'USE_TWO_CAMERAS')       # Set to True if using two cameras for stereo vision
-CAMERA_INDEX_LEFT = config.get('CAMERA_CONFIG', 'CAMERA_INDEX_LEFT')    # Camera index for the left camera (if using two cameras)
-CAMERA_INDEX_RIGHT = config.get('CAMERA_CONFIG', 'CAMERA_INDEX_RIGHT')   # Camera index for the right camera (if using two cameras)
-THREASHOLD_1 = config.getint('DETECTION_CONFIG', 'THREASHOLD1_VALUE')
-THREASHOLD_2 = config.getint('DETECTION_CONFIG', 'THREASHOLD1_VALUE')
+USE_TWO_CAMERAS = config.getboolean('CAMERA_CONFIG', 'USE_TWO_CAMERAS')       # Set to True if using two cameras for stereo vision
+CAMERA_INDEX_LEFT = config.getint('CAMERA_CONFIG', 'CAMERA_INDEX_LEFT')    # Camera index for the left camera (if using two cameras)
+CAMERA_INDEX_RIGHT = config.getint('CAMERA_CONFIG', 'CAMERA_INDEX_RIGHT')   # Camera index for the right camera (if using two cameras)
+THRESHOLD_1 = config.getint('DETECTION_CONFIG', 'threshold1_VALUE')/100
+THRESHOLD_2 = config.getint('DETECTION_CONFIG', 'threshold2_VALUE')/100
+CAMERA_CALC_DIAMETER = config.getboolean('CAMERA_CONFIG', 'CAMERA_CALC_DIAMETER')
+CAMERA_HEIGHT = config.getfloat('CAMERA_CONFIG', 'CAMERA_HEIGHT')
+CAMERA_DISTANCE = config.getfloat('CAMERA_CONFIG', 'CAMERA_DISTANCE')
+CAMERA_FOV = config.getint('CAMERA_CONFIG', 'CAMERA_FOV')
 
 # Define separation values for small and big apples (in pixels or actual diameter)
-PIXEL_SEPARATION = config.get('CAMERA_CONFIG', 'PIXEL_SEPARATION')              # Placeholder value for pixel-related separation
-DIAMETER_SEPARATION = config.get('CAMERA_CONFIG', 'DIAMETER_SEPARATION')          # Placeholder value for actual diameter separation (in cm)
+PIXEL_SEPARATION = config.getfloat('CAMERA_CONFIG', 'PIXEL_SEPARATION')              # Placeholder value for pixel-related separation
+DIAMETER_SEPARATION = config.getfloat('CAMERA_CONFIG', 'DIAMETER_SEPARATION')          # Placeholder value for actual diameter separation (in cm)
 
 DETECTIONMODE_VALUE = config.get('DETECTION_CONFIG', 'DETECTIONMODE_VALUE')  
 CATEGORIZATIONMODE_VALUE = config.get('DETECTION_CONFIG', 'CATEGORIZATIONMODE_VALUE')
@@ -41,21 +46,12 @@ if CATEGORIZATIONMODE_VALUE == '-1': CATEGORIZATIONMODE_VALUE = '0'
 cap_left = None
 cap_right = None
 cap = None
-LOG_FILE_PATH = "../" + config.get('LOGS_CONFIG', 'LOGS_FILE_PATH')
+apple_count = None
+roi = None
+LOG_FILE_PATH = config.get('LOGS_CONFIG', 'LOGS_FILE_PATH')
 
 # ============ \\--// ============
 
-
-
-# Function to initialize the camera
-def initialize_camera():
-    if USE_TWO_CAMERAS:
-        cap_left = cv2.VideoCapture(CAMERA_INDEX_LEFT)
-        cap_right = cv2.VideoCapture(CAMERA_INDEX_RIGHT)
-        return cap_left, cap_right
-    else:
-        cap = cv2.VideoCapture(0)  # Use 0 for the default camera, or specify a camera index
-        return cap
 
 
 # Load the class names from coco.names
@@ -86,10 +82,11 @@ def calculate_iou(box1, box2):
     return iou
 
 # Function to determine apple type (Big, Small, Bad)
-def determine_apple_type(pixel_caliber, diameter, THREASHOLD_2):
-    if THREASHOLD_2 > 0.02:
+def determine_apple_type(pixel_caliber, diameter, categorization_confidence):
+    global THRESHOLD_1, THRESHOLD_2  # Declare these as global
+    if categorization_confidence > THRESHOLD_2:
         return "Bad Apple"
-    elif USE_TWO_CAMERAS:
+    elif CAMERA_CALC_DIAMETER:
         if diameter > DIAMETER_SEPARATION:
             return "Big Apple"
         else:
@@ -102,6 +99,7 @@ def determine_apple_type(pixel_caliber, diameter, THREASHOLD_2):
 
 # Function to perform apple detection and classification
 def detect_and_classify_apples(frame, type):
+    global THRESHOLD_1, THRESHOLD_2  # Declare these as global
     UpdateConfigValues()
     height, width, _ = frame.shape
 
@@ -119,10 +117,10 @@ def detect_and_classify_apples(frame, type):
         for obj in detection:
             scores = obj[5:]
             class_id = np.argmax(scores)
-            THREASHOLD_1 = scores[class_id]
+            detection_confidence = scores[class_id]
 
             # Check if the class name is 'apple'
-            if THREASHOLD_1 > 0 and class_names[class_id] == 'apple':
+            if detection_confidence > THRESHOLD_1 and class_names[class_id] == 'apple':
                 center_x = int(obj[0] * width)
                 center_y = int(obj[1] * height)
                 w = int(obj[2] * width)
@@ -154,42 +152,39 @@ def detect_and_classify_apples(frame, type):
 
                         prediction = model.predict(apple)
 
-                        THREASHOLD_2 = prediction[0][0]
+                        categorization_confidence = prediction[0][0]
 
-                        if USE_TWO_CAMERAS:
-                            # Perform stereo vision processing here (calculate diameter based on stereo images)
+                        pixel_caliber = w  # Use the pixel width as pixel_caliber
+                        if CAMERA_CALC_DIAMETER:
                             # Placeholder values:
-                            pixel_caliber = PIXEL_SEPARATION
-                            diameter = DIAMETER_SEPARATION
+                            diameter = round(MathFunctions.pixels_to_cm(pixel_caliber, CAMERA_HEIGHT, CAMERA_FOV, CAMERA_DISTANCE), 2)
                         else:
                             # Use single camera processing here (calculate diameter based on single image)
                             # Placeholder values:
-                            pixel_caliber = w  # Use the pixel width as pixel_caliber
                             diameter = pixel_caliber
 
                         # Determine apple type
-                        apple_type = determine_apple_type(pixel_caliber, diameter, THREASHOLD_2)
+                        apple_type = determine_apple_type(pixel_caliber, diameter, categorization_confidence)
 
                         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
                         # Log the apple's data
-                        with open(LOG_FILE_PATH, 'a') as log2:
-                            log2.write(f"{timestamp},{apple_type},{diameter}\n")
-
+                        with open(LOG_FILE_PATH, 'a') as log:
+                            log.write(f"{timestamp},{apple_type},{diameter}\n")
                         apple_boxes.append((x, y, w, h))
-                        apple_certainties.append(THREASHOLD_2)
+                        apple_certainties.append(categorization_confidence)
                         apple_diameters.append(diameter)
 
                         # Draw text in the center of the detected apple
-                        if USE_TWO_CAMERAS:
-                            text = f"Diameter: {diameter}px | {apple_type}"
+                        if CAMERA_CALC_DIAMETER:
+                            text = f"Diametro: {diameter}cm | {apple_type}"
                         else:
-                            text = f"Diameter: {pixel_caliber}px | {apple_type}"
+                            text = f"Largura: {pixel_caliber}px | {apple_type}"
                         text_size, _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 2)
                         text_x = x + (w - text_size[0]) // 2
                         text_y = y + (h + text_size[1]) // 2
-                        if THREASHOLD_2 > 0.02:
-                            color = (0, 0, 255)  # Red if rotten THREASHOLD_2 > 0.2
+                        if categorization_confidence > THRESHOLD_2:
+                            color = (255, 0, 0)  # Red if rotten categorization_confidence > THRESHOLD_2
                         else:
                             color = (0, 255, 0)  # Green otherwise
                         cv2.putText(frame, text, (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
@@ -201,68 +196,22 @@ def detect_and_classify_apples(frame, type):
 
 
 ########################################################
-roi = None
-apple_count = 0
+
 
 # Log file setup
-with open(LOG_FILE_PATH, 'w') as log:
+with open("../"+LOG_FILE_PATH, 'w') as log:
     log.write("Timestamp,Type,Diameter\n")
     
-def CameraProcessor():
-    UpdateConfigValues()
-    while True:
-        if USE_TWO_CAMERAS:
-            ret_left, frame_left = cap_left.read()
-            ret_right, frame_right = cap_right.read()
-            if not ret_left or not ret_right:
-                break
-            # Perform stereo vision processing here (calculate diameter based on stereo images)
-            # Placeholder values:
-            pixel_caliber = PIXEL_SEPARATION
-            diameter = DIAMETER_SEPARATION
-        else:
-            ret, frame = cap.read()
-            if not ret:
-                break
-            # Use single camera processing here (calculate diameter based on single image)
-            # Placeholder values:
-            pixel_caliber = PIXEL_SEPARATION
-            diameter = DIAMETER_SEPARATION
-
-        if roi is None:
-            roi = frame.copy()
-
-        # Resize input frame before feeding it to the object detection model
-        #frame = cv2.resize(frame, (1000, 1000))
-
-        # Detect and classify apples and update the frame
-        frame = detect_and_classify_apples(frame)
-
-        if USE_TWO_CAMERAS:
-            # Draw stereo vision lines (for visualization)
-            cv2.line(frame_left, (0, int(frame_left.shape[0] / 2)), (frame_left.shape[1], int(frame_left.shape[0] / 2)),
-                    (0, 0, 255), 2)
-            cv2.line(frame_right, (0, int(frame_right.shape[0] / 2)), (frame_right.shape[1], int(frame_right.shape[0] / 2)),
-                    (0, 0, 255), 2)
-            cv2.imshow('Left Camera', frame_left)
-            cv2.imshow('Right Camera', frame_right)
-        else:
-            cv2.imshow('Apple Sorting and Detection', frame)
-
-
-        # Exit the loop on 'q' key press
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-
 
 # Read ConfigValues Function
 def UpdateConfigValues():
-
+    global USE_TWO_CAMERAS, CAMERA_INDEX_LEFT, CAMERA_INDEX_RIGHT, THRESHOLD_1, THRESHOLD_2, PIXEL_SEPARATION, DIAMETER_SEPARATION, DETECTIONMODE_VALUE, CATEGORIZATIONMODE_VALUE
+    config.read('../config.ini')
     USE_TWO_CAMERAS = config.getboolean('CAMERA_CONFIG', 'USE_TWO_CAMERAS')
     CAMERA_INDEX_LEFT = config.getint('CAMERA_CONFIG', 'CAMERA_INDEX_LEFT')
     CAMERA_INDEX_RIGHT = config.getint('CAMERA_CONFIG', 'CAMERA_INDEX_RIGHT')
-    THREASHOLD_1 = config.getint('DETECTION_CONFIG', 'THREASHOLD1_VALUE')
-    THREASHOLD_2 = config.getint('DETECTION_CONFIG', 'THREASHOLD1_VALUE')
+    THRESHOLD_1 = config.getint('DETECTION_CONFIG', 'threshold1_VALUE')/100
+    THRESHOLD_2 = config.getint('DETECTION_CONFIG', 'threshold2_VALUE')/100
 
     # Define separation values for small and big apples (in pixels or actual diameter)
     PIXEL_SEPARATION = config.get('CAMERA_CONFIG', 'PIXEL_SEPARATION')              # Placeholder value for pixel-related separation
@@ -271,7 +220,7 @@ def UpdateConfigValues():
     DETECTIONMODE_VALUE = config.get('DETECTION_CONFIG', 'DETECTIONMODE_VALUE')  
     CATEGORIZATIONMODE_VALUE = config.get('DETECTION_CONFIG', 'CATEGORIZATIONMODE_VALUE')   
 
-    return USE_TWO_CAMERAS, CAMERA_INDEX_LEFT, CAMERA_INDEX_RIGHT, THREASHOLD_1, THREASHOLD_2, PIXEL_SEPARATION, DIAMETER_SEPARATION, DETECTIONMODE_VALUE, CATEGORIZATIONMODE_VALUE
+    return USE_TWO_CAMERAS, CAMERA_INDEX_LEFT, CAMERA_INDEX_RIGHT, THRESHOLD_1, THRESHOLD_2, PIXEL_SEPARATION, DIAMETER_SEPARATION, DETECTIONMODE_VALUE, CATEGORIZATIONMODE_VALUE
 
 # Clean up
 if USE_TWO_CAMERAS:
