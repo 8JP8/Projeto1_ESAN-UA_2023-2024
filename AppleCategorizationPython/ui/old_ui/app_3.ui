@@ -638,24 +638,12 @@ border: 1px solid grey;</string>
     <addaction name="actionOpen_Upload"/>
     <addaction name="actionSave_Output_File"/>
    </widget>
-   <widget class="QMenu" name="menuTools">
+   <widget class="QMenu" name="menuLogs">
     <property name="title">
-     <string>Ferramentas</string>
+     <string>Logs</string>
     </property>
-    <widget class="QMenu" name="menu_logs">
-     <property name="title">
-      <string>Logs</string>
-     </property>
-     <property name="icon">
-      <iconset>
-       <normaloff>icons/documentediting_editdocuments_text_documentedi_2820.ico</normaloff>icons/documentediting_editdocuments_text_documentedi_2820.ico</iconset>
-     </property>
-     <addaction name="separator"/>
-     <addaction name="action_logs_open"/>
-     <addaction name="action_logs_export"/>
-    </widget>
-    <addaction name="menu_logs"/>
-    <addaction name="action_restartprogram"/>
+    <addaction name="action_Logs"/>
+    <addaction name="action_exportLogs"/>
    </widget>
    <widget class="QMenu" name="menuInfo">
     <property name="title">
@@ -671,7 +659,7 @@ border: 1px solid grey;</string>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuView"/>
-   <addaction name="menuTools"/>
+   <addaction name="menuLogs"/>
    <addaction name="menuInfo"/>
   </widget>
   <action name="actionOpen_Upload">
@@ -710,16 +698,7 @@ border: 1px solid grey;</string>
     <string>Vista Grande (Ctrl+Direita)</string>
    </property>
   </action>
-  <action name="action_restartprogram">
-   <property name="icon">
-    <iconset>
-     <normaloff>icons/79699_panel_restart_system_icon.ico</normaloff>icons/79699_panel_restart_system_icon.ico</iconset>
-   </property>
-   <property name="text">
-    <string>Reiniciar App</string>
-   </property>
-  </action>
-  <action name="action_logs_open">
+  <action name="action_Logs">
    <property name="icon">
     <iconset>
      <normaloff>icons/documentediting_editdocuments_text_documentedi_2820.ico</normaloff>icons/documentediting_editdocuments_text_documentedi_2820.ico</iconset>
@@ -728,7 +707,7 @@ border: 1px solid grey;</string>
     <string>Abrir Ficheiro de Logs (Ctrl+L)</string>
    </property>
   </action>
-  <action name="action_logs_export">
+  <action name="action_exportLogs">
    <property name="icon">
     <iconset>
      <normaloff>icons/File_Explorer_23583.ico</normaloff>icons/File_Explorer_23583.ico</iconset>

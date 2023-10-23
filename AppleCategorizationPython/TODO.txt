@@ -2,5 +2,9 @@
 - Meter mais prompts
 - Meter outras tecnologias de deteção
 - Separar as Funções por Módulos para fácil leitura
-- Arranjar maneira de atualizar a config em tempo real
 - Testar com 2 Câmaras
+
+FILTROS:
+- Sobel
+- Dilate ✅
+- Erode ✅

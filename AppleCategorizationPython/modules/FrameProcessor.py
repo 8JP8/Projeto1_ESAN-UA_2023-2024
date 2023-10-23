@@ -7,12 +7,12 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 currentvideopath = ""
 
-def ImageProcessor(img_filepath, frame):
+def ImageProcessor(img_filepath, frame, threshold1, threshold2):
 
     # Process each image in the test_images folder
     if os.path.isfile(img_filepath):
         try:
-            frame = code_v1.detect_and_classify_apples(frame, "image")
+            frame = code_v1.detect_and_classify_apples(frame, "image", threshold1, threshold2)
             return (True, frame)
         except:
             return(False, f"Erro: Não foi possível abrir o ficheiro '{os.path.basename(img_filepath)}'.")
@@ -20,14 +20,14 @@ def ImageProcessor(img_filepath, frame):
         return(False, f"Erro: Imagem '{os.path.basename(img_filepath)}' não encontrada.")
         
 
-def VideoProcessor(vd_filepath, frame):
+def VideoProcessor(vd_filepath, frame, threshold1, threshold2):
     if (currentvideopath == "") or (currentvideopath != vd_filepath):
         if os.path.isfile(vd_filepath):
             cap = cv2.VideoCapture(vd_filepath)
             if not cap.isOpened():
                 return (False, f"Erro: Não foi possível abrir o ficheiro '{os.path.basename(vd_filepath)}'.")
             else:
-                newframe = code_v1.detect_and_classify_apples(frame, "video")
+                newframe = code_v1.detect_and_classify_apples(frame, "video", threshold1, threshold2)
                 return (True, newframe)
         else:
             return (False, f"Erro: Vídeo '{os.path.basename(vd_filepath)}' não encontrado.")
@@ -38,10 +38,10 @@ def VideoProcessor(vd_filepath, frame):
         except:
             return(False, f"Erro: Não foi possível abrir o ficheiro '{os.path.basename(vd_filepath)}'.")
         
-def CameraProcessor(self, inputframe):
+def CameraProcessor(self, inputframe, threshold1, threshold2):
     # Detect and classify apples and update the frame
-    try:
-        frame = code_v1.detect_and_classify_apples(inputframe, "camera")
-    except:
-        return(False, f"Erro: O processamento de frames falhou.")
+    #try:
+    frame = code_v1.detect_and_classify_apples(inputframe, "camera", threshold1, threshold2)
+    #except:
+    #    return(False, f"Erro: O processamento de frames falhou.")
     return (True, frame)

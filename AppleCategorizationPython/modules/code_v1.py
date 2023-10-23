@@ -98,8 +98,9 @@ def determine_apple_type(pixel_caliber, diameter, categorization_confidence):
             return "Small Apple"
 
 # Function to perform apple detection and classification
-def detect_and_classify_apples(frame, type):
-    global THRESHOLD_1, THRESHOLD_2  # Declare these as global
+def detect_and_classify_apples(frame, type, threshold1, threshold2):
+    THRESHOLD_1 = threshold1
+    THRESHOLD_2 = threshold2
     UpdateConfigValues()
     height, width, _ = frame.shape
 
@@ -170,7 +171,10 @@ def detect_and_classify_apples(frame, type):
 
                         # Log the apple's data
                         with open(LOG_FILE_PATH, 'a') as log:
-                            log.write(f"{timestamp},{apple_type},{diameter}\n")
+                            if CAMERA_CALC_DIAMETER:
+                                log.write(f"{timestamp},{apple_type},{diameter}cm\n")
+                            else:
+                                log.write(f"{timestamp},{apple_type},{diameter}px\n")
                         apple_boxes.append((x, y, w, h))
                         apple_certainties.append(categorization_confidence)
                         apple_diameters.append(diameter)
@@ -214,8 +218,8 @@ def UpdateConfigValues():
     THRESHOLD_2 = config.getint('DETECTION_CONFIG', 'threshold2_VALUE')/100
 
     # Define separation values for small and big apples (in pixels or actual diameter)
-    PIXEL_SEPARATION = config.get('CAMERA_CONFIG', 'PIXEL_SEPARATION')              # Placeholder value for pixel-related separation
-    DIAMETER_SEPARATION = config.get('CAMERA_CONFIG', 'DIAMETER_SEPARATION')          # Placeholder value for actual diameter separation (in cm)
+    PIXEL_SEPARATION = config.getfloat('CAMERA_CONFIG', 'PIXEL_SEPARATION')              # Placeholder value for pixel-related separation
+    DIAMETER_SEPARATION = config.getfloat('CAMERA_CONFIG', 'DIAMETER_SEPARATION')          # Placeholder value for actual diameter separation (in cm)
 
     DETECTIONMODE_VALUE = config.get('DETECTION_CONFIG', 'DETECTIONMODE_VALUE')  
     CATEGORIZATIONMODE_VALUE = config.get('DETECTION_CONFIG', 'CATEGORIZATIONMODE_VALUE')   

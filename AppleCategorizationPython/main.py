@@ -31,7 +31,7 @@ class MyApp(QMainWindow):                     #GUI CLASS
     def __init__(self):                       # CONSTRUCTOR
         super (MyApp, self).__init__()
         loadUi('ui/app.ui', self)
-        app.setWindowIcon(QIcon('apple.ico'))
+        app.setWindowIcon(QIcon('ui/icons/apple.ico'))
         self.pid = QApplication.applicationPid()
         
         # ============ INICIALIZAÇÃO COM OS VALORES DA CONFIG ============
@@ -56,13 +56,14 @@ class MyApp(QMainWindow):                     #GUI CLASS
         self.action_big_view.triggered.connect(self.big_vw)
         self.action_small_view.setShortcut("Ctrl+Left")
         self.action_big_view.setShortcut("Ctrl+Right")
+        self.action_restartprogram.triggered.connect(self.restartprogram)
         #self.menuLogs.aboutToShow.connect(self.logs_open)
         #self.shortcut = QShortcut(QKeySequence('Ctrl+L'), self)
         #self.shortcut.activated.connect(self.logs_open) 
-        self.action_Logs.triggered.connect(self.logs_open)
-        self.action_exportLogs.triggered.connect(self.logs_save)
-        self.action_Logs.setShortcut("Ctrl+L")
-        self.action_exportLogs.setShortcut("Ctrl+Shift+L")
+        self.action_logs_open.triggered.connect(self.logs_open)
+        self.action_logs_export.triggered.connect(self.logs_save)
+        self.action_logs_open.setShortcut("Ctrl+L")
+        self.action_logs_export.setShortcut("Ctrl+Shift+L")
         self.menuInfo.aboutToShow.connect(self.info_open)
         self.threshold1_SLIDER.valueChanged.connect(self.update_config)
         self.threshold2_SLIDER.valueChanged.connect(self.update_config)
@@ -147,7 +148,7 @@ class MyApp(QMainWindow):                     #GUI CLASS
                 self.inputframe_1.setPixmap(QPixmap.fromImage(imagef))
                 self.inputframe_3.setPixmap(QPixmap.fromImage(imagef2))
                 # =========================== \\--// ===========================
-                processedimage = FrameProcessor.ImageProcessor(self.filename, image)
+                processedimage = FrameProcessor.ImageProcessor(self.filename, image, self.threshold1_SLIDER.value(), self.threshold2_SLIDER.value())
                 if not processedimage[0]:
                     self.show_warning(processedimage[1])
                 else:
@@ -165,8 +166,12 @@ class MyApp(QMainWindow):                     #GUI CLASS
                     self.outputframe_1.setPixmap(QPixmap.fromImage(imagepi))
                     self.outputframe_3.setPixmap(QPixmap.fromImage(imagep2i))
                     # ============================ \\--// ============================
-     
-    # ======= VIDEO PROCESSING THREAD START AND CLOSE CODE =======  
+        
+
+    # ======= START AND CLOSE FUNCTIONS =======  
+    def restartprogram(self):
+        python = sys.executable
+        os.execl(python, python, *sys.argv)
     def closeEvent(self, event: QCloseEvent):
         self.thread_stop_flag = True
         self.colorfilters = ColorFilters()
@@ -226,7 +231,7 @@ class MyApp(QMainWindow):                     #GUI CLASS
             self.inputframe_3.setPixmap(QPixmap.fromImage(image2))
             
             #frame processing
-            processor_result = FrameProcessor.VideoProcessor(video, processoriginalquality)
+            processor_result = FrameProcessor.VideoProcessor(video, processoriginalquality, self.threshold1_SLIDER.value(), self.threshold2_SLIDER.value())
             if not processor_result[0]:
                 self.show_warning(processor_result[1])
             else:
@@ -340,8 +345,8 @@ class MyApp(QMainWindow):                     #GUI CLASS
                 self.inputframe_2.setPixmap(QPixmap.fromImage(image3))
                 self.inputframe_4.setPixmap(QPixmap.fromImage(image4))
                 # Frame processing
-                processor_result = FrameProcessor.CameraProcessor(self, frameoriginal)
-                processor_result2 = FrameProcessor.CameraProcessor(self, frameoriginal2)
+                processor_result = FrameProcessor.CameraProcessor(self, frameoriginal, self.threshold1_SLIDER.value(), self.threshold2_SLIDER.value())
+                processor_result2 = FrameProcessor.CameraProcessor(self, frameoriginal2, self.threshold1_SLIDER.value(), self.threshold2_SLIDER.value())
                 if not processor_result[0] or not processor_result2[0]:
                     self.show_warning(processor_result[1])
                 else:
@@ -375,7 +380,7 @@ class MyApp(QMainWindow):                     #GUI CLASS
                 image2 = QImage(emptyframe2, emptyframe2.shape[1], emptyframe2.shape[0], emptyframe2.strides[0], QImage.Format.Format_RGB888)
                 self.inputframe_1.setPixmap(QPixmap.fromImage(image))
                 self.inputframe_3.setPixmap(QPixmap.fromImage(image2))
-                processor_result = FrameProcessor.CameraProcessor(self, frame)
+                processor_result = FrameProcessor.CameraProcessor(self, frame, self.threshold1_SLIDER.value(), self.threshold2_SLIDER.value())
 
                 if not processor_result[0]:
                     self.show_warning(processor_result[1])
@@ -409,10 +414,21 @@ class MyApp(QMainWindow):                     #GUI CLASS
     def big_vw(self):
         self.stackedWidget.setCurrentIndex(1)
         self.resize(771, 584)
-    def save_file(self):
-        return  #não implementado
-    def logs_save(self):    
-        return  #não implementado
+    def save_file(self, filepath):
+        savefile_dialog_path, _ = QFileDialog.getSaveFileName(self, "Guardar", "", "All Files (*);;Text Files (*.txt)")
+        if savefile_dialog_path:
+            # Copy a file  to the chosen path
+            with open(filepath, "rb") as src_file, open(savefile_dialog_path, "wb") as dest_file:
+                dest_file.write(src_file.read())
+
+    def logs_save(self):
+        savefile_dialog_path, _ = QFileDialog.getSaveFileName(self, "Guardar Ficheiro de Logs", "", "All Files (*);;Text Files (*.txt)")
+        if savefile_dialog_path:
+            # Copy logs file to the chosen path
+            source_file = config.get('LOGS_CONFIG', 'LOGS_FILE_PATH')
+            with open(source_file, "rb") as src_file, open(savefile_dialog_path, "wb") as dest_file:
+                dest_file.write(src_file.read())
+
     def logs_open(self):
         file_path = config.get('LOGS_CONFIG', 'LOGS_FILE_PATH')
         if sys.platform.startswith('win'):
@@ -433,7 +449,6 @@ class MyApp(QMainWindow):                     #GUI CLASS
         info_dialog.exec()
     
     def update_config(self):
-        
         config.set('DETECTION_CONFIG', 'threshold1_value', str(self.threshold1_SLIDER.value()))
         config.set('DETECTION_CONFIG', 'threshold2_value', str(self.threshold2_SLIDER.value()))
         config.set('DETECTION_CONFIG', 'mode_value', str(self.mode_COMBOBOX.currentIndex()))
@@ -458,7 +473,7 @@ class MyApp(QMainWindow):                     #GUI CLASS
     # ===============================================================
     def show_alert(self, title, msg, icon):
         msg_box = QMessageBox(self)
-        msg_box.setWindowIcon(QIcon('apple.ico'))
+        msg_box.setWindowIcon(QIcon('ui/icons/apple.ico'))
         msg_box.setWindowTitle(title)
         msg_box.setText(msg)
         msg_box.setStandardButtons(QMessageBox.StandardButton.Ok)
@@ -471,6 +486,142 @@ class ColorFilters(QWidget):
         super().__init__()
         # Load the widget UI file
         loadUi('ui/filters.ui', self)
+
+        #Initialize the Values from the Config File
+        self.minhue_slider.setValue(config.getint('FILTER_CONFIG','min_hue'))
+        self.minhue_slider.setValue(config.getint('FILTER_CONFIG','max_hue'))
+        self.minsat_slider.setValue(config.getint('FILTER_CONFIG','min_saturation'))
+        self.maxsat_slider.setValue(config.getint('FILTER_CONFIG','max_saturation'))
+        self.minval_slider.setValue(config.getint('FILTER_CONFIG','min_value'))
+        self.maxval_slider.setValue(config.getint('FILTER_CONFIG','max_value'))
+        self.sataddsub_slider.setValue(config.getint('FILTER_CONFIG','saturation_multiplier'))
+        self.valaddsub_slider.setValue(config.getint('FILTER_CONFIG','value_multiplier'))
+        self.kernelsize_slider.setValue(config.getint('FILTER_CONFIG','kernelsize'))
+        self.erodelter_slider.setValue(config.getint('FILTER_CONFIG','erode'))
+        self.dilatelter_slider.setValue(config.getint('FILTER_CONFIG','dilate'))
+        self.canny1_slider.setValue(config.getint('FILTER_CONFIG','canny_1'))
+        self.canny2_slider.setValue(config.getint('FILTER_CONFIG','canny_2'))
+        self.spinboxupdate()
+
+        # Refresh when Changed
+        self.reset_bt.clicked.connect(self.reset)
+        self.close_bt.clicked.connect(self.close_widget)
+        self.minhue_slider.valueChanged.connect(self.spinboxupdate)
+        self.minsat_slider.valueChanged.connect(self.spinboxupdate)
+        self.minval_slider.valueChanged.connect(self.spinboxupdate)
+        self.maxhue_slider.valueChanged.connect(self.spinboxupdate)
+        self.maxsat_slider.valueChanged.connect(self.spinboxupdate)
+        self.maxval_slider.valueChanged.connect(self.spinboxupdate)
+        self.sataddsub_slider.valueChanged.connect(self.spinboxupdate)
+        self.valaddsub_slider.valueChanged.connect(self.spinboxupdate)
+        self.kernelsize_slider.valueChanged.connect(self.spinboxupdate)
+        self.erodelter_slider.valueChanged.connect(self.spinboxupdate)
+        self.dilatelter_slider.valueChanged.connect(self.spinboxupdate)
+        self.canny1_slider.valueChanged.connect(self.spinboxupdate)
+        self.canny2_slider.valueChanged.connect(self.spinboxupdate)
+
+        self.minhue_spinbox.valueChanged.connect(self.sliderupdate)
+        self.minsat_spinbox.valueChanged.connect(self.sliderupdate)
+        self.minval_spinbox.valueChanged.connect(self.sliderupdate)
+        self.maxhue_spinbox.valueChanged.connect(self.sliderupdate)
+        self.maxsat_spinbox.valueChanged.connect(self.sliderupdate)
+        self.maxval_spinbox.valueChanged.connect(self.sliderupdate)
+        self.sataddsub_spinbox.valueChanged.connect(self.sliderupdate)
+        self.valaddsub_spinbox.valueChanged.connect(self.sliderupdate)
+        self.kernelsize_spinbox.valueChanged.connect(self.sliderupdate)
+        self.erodelter_spinbox.valueChanged.connect(self.sliderupdate)
+        self.dilatelter_spinbox.valueChanged.connect(self.sliderupdate)
+        self.canny1_spinbox.valueChanged.connect(self.sliderupdate)
+        self.canny2_spinbox.valueChanged.connect(self.spinboxupdate)
+
+    def sliderupdate(self):
+        self.minhue_slider.setValue(self.minhue_spinbox.value())
+        self.minsat_slider.setValue(self.minsat_spinbox.value())
+        self.minval_slider.setValue(self.minval_spinbox.value())
+        self.maxhue_slider.setValue(self.maxhue_spinbox.value())
+        self.maxsat_slider.setValue(self.maxsat_spinbox.value())
+        self.maxval_slider.setValue(self.maxval_spinbox.value())
+        self.sataddsub_slider.setValue(self.sataddsub_spinbox.value())
+        self.valaddsub_slider.setValue(self.valaddsub_spinbox.value())
+        self.kernelsize_slider.setValue(self.kernelsize_spinbox.value())
+        self.erodelter_slider.setValue(self.erodelter_spinbox.value())
+        self.dilatelter_slider.setValue(self.dilatelter_spinbox.value())
+        self.canny1_slider.setValue(self.canny1_spinbox.value())
+        self.canny2_slider.setValue(self.canny2_spinbox.value())
+        self.updateconfigfiltervalues()
+
+    def spinboxupdate(self):
+        self.minhue_spinbox.setValue(self.minhue_slider.value())
+        self.minsat_spinbox.setValue(self.minsat_slider.value())
+        self.minval_spinbox.setValue(self.minval_slider.value())
+        self.maxhue_spinbox.setValue(self.maxhue_slider.value())
+        self.maxsat_spinbox.setValue(self.maxsat_slider.value())
+        self.maxval_spinbox.setValue(self.maxval_slider.value())
+        self.sataddsub_spinbox.setValue(self.sataddsub_slider.value())
+        self.valaddsub_spinbox.setValue(self.valaddsub_slider.value())
+        self.kernelsize_spinbox.setValue(self.kernelsize_slider.value())
+        self.erodelter_spinbox.setValue(self.erodelter_slider.value())
+        self.dilatelter_spinbox.setValue(self.dilatelter_slider.value())
+        self.canny1_spinbox.setValue(self.canny1_slider.value())
+        self.canny2_spinbox.setValue(self.canny2_slider.value())
+        self.updateconfigfiltervalues()
+
+    def updateconfigfiltervalues(self):
+        config.set('FILTER_CONFIG', 'min_hue', str(self.minhue_slider.value()))
+        config.set('FILTER_CONFIG', 'max_hue', str(self.maxhue_slider.value()))
+        config.set('FILTER_CONFIG', 'min_saturation', str(self.minsat_slider.value()))
+        config.set('FILTER_CONFIG', 'max_saturation', str(self.maxsat_slider.value()))
+        config.set('FILTER_CONFIG', 'min_value', str(self.minval_slider.value()))
+        config.set('FILTER_CONFIG', 'max_saturation', str(self.maxval_slider.value()))
+        config.set('FILTER_CONFIG', 'saturation_multiplier', str(self.sataddsub_slider.value()))
+        config.set('FILTER_CONFIG', 'value_multiplier', str(self.valaddsub_slider.value()))
+        config.set('FILTER_CONFIG', 'kernelsize', str(self.kernelsize_slider.value()))
+        config.set('FILTER_CONFIG', 'erode', str(self.erodelter_slider.value()))
+        config.set('FILTER_CONFIG', 'dilate', str(self.dilatelter_slider.value()))
+        config.set('FILTER_CONFIG', 'canny_1', str(self.canny1_slider.value()))
+        config.set('FILTER_CONFIG', 'canny_2', str(self.canny2_slider.value()))
+
+         # Save the changes
+        with open('config.ini', 'w') as config_file:
+            config.write(config_file)
+
+    # returns an HSV filter object based on the control GUI values and Canny edge filter object based on the control GUI values
+    def getfiltervalues(self):
+        
+        filter.minhue = self.minhue_slider.value()
+        filter.minsat = self.minsat_slider.value()
+        filter.minval = self.minval_slider.value()
+        filter.maxhue = self.maxhue_slider.value()
+        filter.maxsat = self.maxsat_slider.value()
+        filter.maxval = self.maxval_slider.value()
+        filter.sat_addsub = self.sataddsub_slider.value()
+        filter.val_addsub = self.valaddsub_slider.value()
+        filter.kernelsize = self.kernelsize_slider.value()
+        filter.erode = self.erodelter_slider.value()
+        filter.dilate = self.dilatelter_slider.value()
+        filter.canny1 = self.canny1_slider.value()
+        filter.canny2 = self.canny2_slider.value()
+
+        return filter
+    
+    def reset(self):
+        self.minhue_slider.setValue(0)
+        self.minhue_slider.setValue(179)
+        self.minsat_slider.setValue(0)
+        self.maxsat_slider.setValue(255)
+        self.minval_slider.setValue(0)
+        self.maxval_slider.setValue(255)
+        self.sataddsub_slider.setValue(0)
+        self.valaddsub_slider.setValue(0)
+        self.kernelsize_slider.setValue(1)
+        self.erodelter_slider.setValue(1)
+        self.dilatelter_slider.setValue(1)
+        self.canny1_slider.setValue(0)
+        self.canny2_slider.setValue(0)
+        self.spinboxupdate()
+    
+    def close_widget(self):
+        self.close()
 
 class AboutDialog(QDialog):
     def __init__(self, parent=None):
