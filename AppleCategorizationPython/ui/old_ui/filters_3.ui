@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>414</width>
-    <height>536</height>
+    <height>498</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -64,7 +64,7 @@
       <string notr="true">font: 12pt &quot;MS Shell Dlg 2&quot;;</string>
      </property>
      <property name="text">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Controlo de Filtros&lt;/span&gt; [Tempo Real]&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      <string>Controlo de Filtros [Tempo Real]</string>
      </property>
      <property name="textFormat">
       <enum>Qt::AutoText</enum>
@@ -843,9 +843,6 @@
      </item>
      <item>
       <widget class="QSlider" name="kernelsize_slider">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
        <property name="minimum">
         <number>1</number>
        </property>
@@ -881,9 +878,6 @@
      </item>
      <item>
       <widget class="QSpinBox" name="kernelsize_spinbox">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -942,9 +936,6 @@
      </item>
      <item>
       <widget class="QSlider" name="erodelter_slider">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
        <property name="minimum">
         <number>1</number>
        </property>
@@ -977,9 +968,6 @@
      </item>
      <item>
       <widget class="QSpinBox" name="erodelter_spinbox">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -1038,9 +1026,6 @@
      </item>
      <item>
       <widget class="QSlider" name="dilatelter_slider">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
        <property name="minimum">
         <number>1</number>
        </property>
@@ -1073,9 +1058,6 @@
      </item>
      <item>
       <widget class="QSpinBox" name="dilatelter_spinbox">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -1134,9 +1116,6 @@
      </item>
      <item>
       <widget class="QSlider" name="canny1_slider">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
        <property name="minimum">
         <number>0</number>
        </property>
@@ -1169,9 +1148,6 @@
      </item>
      <item>
       <widget class="QSpinBox" name="canny1_spinbox">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -1230,9 +1206,6 @@
      </item>
      <item>
       <widget class="QSlider" name="canny2_slider">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
        <property name="minimum">
         <number>0</number>
        </property>
@@ -1265,9 +1238,6 @@
      </item>
      <item>
       <widget class="QSpinBox" name="canny2_spinbox">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -1290,129 +1260,6 @@
         <number>500</number>
        </property>
       </widget>
-     </item>
-    </layout>
-   </item>
-   <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_16">
-     <item>
-      <widget class="QLabel" name="canny2_lb_2">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string>Contornos</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <spacer name="horizontalSpacer_29">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeType">
-        <enum>QSizePolicy::Preferred</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>13</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item>
-      <widget class="QRadioButton" name="canny_radiobt">
-       <property name="layoutDirection">
-        <enum>Qt::LeftToRight</enum>
-       </property>
-       <property name="text">
-        <string>Canny</string>
-       </property>
-       <property name="autoRepeat">
-        <bool>false</bool>
-       </property>
-       <property name="autoExclusive">
-        <bool>false</bool>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <spacer name="horizontalSpacer_30">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeType">
-        <enum>QSizePolicy::Preferred</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>13</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item>
-      <widget class="QRadioButton" name="laplace_radiobt_2">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="text">
-        <string>Sobel</string>
-       </property>
-       <property name="autoExclusive">
-        <bool>false</bool>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <spacer name="horizontalSpacer_31">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeType">
-        <enum>QSizePolicy::Preferred</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>13</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item>
-      <widget class="QRadioButton" name="laplace_radiobt">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="text">
-        <string>Laplace</string>
-       </property>
-       <property name="autoExclusive">
-        <bool>false</bool>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <spacer name="horizontalSpacer_32">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeType">
-        <enum>QSizePolicy::Preferred</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>13</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
      </item>
     </layout>
    </item>
@@ -1453,6 +1300,42 @@
         </size>
        </property>
       </spacer>
+     </item>
+     <item>
+      <widget class="QRadioButton" name="laplace_radiobt_2">
+       <property name="text">
+        <string>Sobel</string>
+       </property>
+       <property name="autoExclusive">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QRadioButton" name="canny_radiobt">
+       <property name="layoutDirection">
+        <enum>Qt::LeftToRight</enum>
+       </property>
+       <property name="text">
+        <string>Canny</string>
+       </property>
+       <property name="autoRepeat">
+        <bool>false</bool>
+       </property>
+       <property name="autoExclusive">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QRadioButton" name="laplace_radiobt">
+       <property name="text">
+        <string>Laplace</string>
+       </property>
+       <property name="autoExclusive">
+        <bool>false</bool>
+       </property>
+      </widget>
      </item>
      <item>
       <spacer name="horizontalSpacer_16">

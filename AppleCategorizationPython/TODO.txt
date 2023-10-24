@@ -5,6 +5,5 @@
 - Testar com 2 Câmaras
 
 FILTROS:
-- Sobel
-- Dilate ✅
-- Erode ✅
+adicionar laplace
+adicionar sobel
