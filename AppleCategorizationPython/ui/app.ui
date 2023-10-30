@@ -240,6 +240,11 @@
        <string>YOLO_V4 TINY</string>
       </property>
      </item>
+     <item>
+      <property name="text">
+       <string>CUSTOM</string>
+      </property>
+     </item>
     </widget>
     <widget class="QLabel" name="modoslb">
      <property name="geometry">
@@ -637,6 +642,7 @@ border: 1px solid grey;</string>
     </property>
     <addaction name="actionOpen_Upload"/>
     <addaction name="actionSave_Output_File"/>
+    <addaction name="actionSave_Frame"/>
    </widget>
    <widget class="QMenu" name="menuTools">
     <property name="title">
@@ -689,7 +695,7 @@ border: 1px solid grey;</string>
      <normaloff>icons/ic_save_128_28731.ico</normaloff>icons/ic_save_128_28731.ico</iconset>
    </property>
    <property name="text">
-    <string>Guardar (Ctrl+G)</string>
+    <string>Guardar Arquivo (Ctrl+G)</string>
    </property>
   </action>
   <action name="action_small_view">
@@ -716,7 +722,7 @@ border: 1px solid grey;</string>
      <normaloff>icons/79699_panel_restart_system_icon.ico</normaloff>icons/79699_panel_restart_system_icon.ico</iconset>
    </property>
    <property name="text">
-    <string>Reiniciar App</string>
+    <string>Reiniciar App (Ctrl+Shift+R)</string>
    </property>
   </action>
   <action name="action_logs_open">
@@ -735,6 +741,15 @@ border: 1px solid grey;</string>
    </property>
    <property name="text">
     <string>Exportar Logs (Ctrl+Shift+L)</string>
+   </property>
+  </action>
+  <action name="actionSave_Frame">
+   <property name="icon">
+    <iconset>
+     <normaloff>icons/icons8-picture-96.ico</normaloff>icons/icons8-picture-96.ico</iconset>
+   </property>
+   <property name="text">
+    <string>Guardar Frame (Ctrl+F)</string>
    </property>
   </action>
  </widget>

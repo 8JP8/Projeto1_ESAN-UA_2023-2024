@@ -52,11 +52,14 @@ class MyApp(QMainWindow):                     #GUI CLASS
         self.actionOpen_Upload.triggered.connect(self.load_file)
         self.actionSave_Output_File.triggered.connect(self.save_file)
         self.actionSave_Output_File.setShortcuts([QKeySequence.fromString("Ctrl+S"), QKeySequence.fromString("Ctrl+G")])
+        self.actionSave_Frame.triggered.connect(self.save_frame)
+        self.actionSave_Frame.setShortcut("Ctrl+F")
         self.action_small_view.triggered.connect(self.small_vw)
         self.action_big_view.triggered.connect(self.big_vw)
         self.action_small_view.setShortcut("Ctrl+Left")
         self.action_big_view.setShortcut("Ctrl+Right")
         self.action_restartprogram.triggered.connect(self.restartprogram)
+        self.action_restartprogram.setShortcut("Ctrl+Shift+R")
         #self.menuLogs.aboutToShow.connect(self.logs_open)
         #self.shortcut = QShortcut(QKeySequence('Ctrl+L'), self)
         #self.shortcut.activated.connect(self.logs_open) 
@@ -152,6 +155,8 @@ class MyApp(QMainWindow):                     #GUI CLASS
                 if not processedimage[0]:
                     self.show_warning(processedimage[1])
                 else:
+                    # get current frame and save it as a variable
+                    self.currentframesaver(processedimage[1])
                     # ===================== CENTER THE IMAGE =====================
                     framepi = cv2.resize(processedimage[1], (framei.shape[1], framei.shape[0]))
                     framep2i = cv2.resize(processedimage[1], (frame2i.shape[1], frame2i.shape[0]))
@@ -235,6 +240,8 @@ class MyApp(QMainWindow):                     #GUI CLASS
             if not processor_result[0]:
                 self.show_warning(processor_result[1])
             else:
+                # get current frame and save it as a variable
+                self.currentframesaver(processor_result[1])
                 # Ensure that processedvideoframe has the same dimensions as the target area
                 processedvideoframe = cv2.resize(processor_result[1], (frame.shape[1], frame.shape[0]))
                 processedvideoframe2 = cv2.resize(processor_result[1], (frame2.shape[1], frame2.shape[0]))
@@ -350,6 +357,9 @@ class MyApp(QMainWindow):                     #GUI CLASS
                 if not processor_result[0] or not processor_result2[0]:
                     self.show_warning(processor_result[1])
                 else:
+                    # get current frame and save it as a variable
+                    self.currentframesaver(processor_result[1])
+                    self.currentframesaver2(processor_result2[1])
                     # Ensure that processedvideoframe has the same dimensions as the target area
                     processedvideoframe = cv2.resize(processor_result[1], (frame.shape[1], frame.shape[0]))
                     processedvideoframe2 = cv2.resize(processor_result[1], (frame2.shape[1], frame2.shape[0]))
@@ -380,11 +390,13 @@ class MyApp(QMainWindow):                     #GUI CLASS
                 image2 = QImage(emptyframe2, emptyframe2.shape[1], emptyframe2.shape[0], emptyframe2.strides[0], QImage.Format.Format_RGB888)
                 self.inputframe_1.setPixmap(QPixmap.fromImage(image))
                 self.inputframe_3.setPixmap(QPixmap.fromImage(image2))
-                processor_result = FrameProcessor.CameraProcessor(self, frame, self.threshold1_SLIDER.value(), self.threshold2_SLIDER.value(), filter)
+                processor_result = FrameProcessor.CameraProcessor(self, frameoriginal, self.threshold1_SLIDER.value(), self.threshold2_SLIDER.value(), filter)
 
                 if not processor_result[0]:
                     self.show_warning(processor_result[1])
                 else:
+                    # get current frame and save it as a variable
+                    self.currentframesaver(processor_result[1])
                     # Ensure that processedvideoframe has the same dimensions as the target area
                     processedvideoframe = cv2.resize(processor_result[1], (frame.shape[1], frame.shape[0]))
                     processedvideoframe2 = cv2.resize(processor_result[1], (frame2.shape[1], frame2.shape[0]))
@@ -408,19 +420,57 @@ class MyApp(QMainWindow):                     #GUI CLASS
         # Release the camera when you're done
         self.camera.release()
 
+    def currentframesaver(self, frame):
+        height, width, channel = frame.shape
+        bytes_per_line = 3 * width
+        q_image = QImage(frame.data, width, height, bytes_per_line, QImage.Format.Format_RGB888)
+        pixmap = QPixmap.fromImage(q_image)
+        self.currentimageframe = pixmap
+    def currentframesaver2(self, frame):
+        height, width, channel = frame.shape
+        bytes_per_line = 3 * width
+        q_image = QImage(frame.data, width, height, bytes_per_line, QImage.Format.Format_RGB888)
+        pixmap = QPixmap.fromImage(q_image)
+        self.currentimageframe2 = pixmap
+
     def small_vw(self):
         self.stackedWidget.setCurrentIndex(0)
         self.resize(771, 584)
     def big_vw(self):
         self.stackedWidget.setCurrentIndex(1)
         self.resize(771, 584)
-    def save_file(self, filepath):
+    def save_frame(self, filepath):
+        # Get pixel data from the QPixmap
+        savefile_dialog_path, _ = QFileDialog.getSaveFileName(self, "Guardar", "", "All Files (*);;Text Files (*.txt)")
+        if savefile_dialog_path:
+            pixmap = self.currentimageframe
+            if not pixmap.isNull():
+                try:
+                    pixmap.save(savefile_dialog_path)
+                    self.show_info(f"Imagem Guardada: {savefile_dialog_path}")
+                except Exception as e:
+                    self.show_error(f"Erro ao Guardar a Imagem: {str(e)}")
+            else:
+                self.show_error(f"Erro: Não pode gravar uma imagem em branco.")
+            if USE_TWO_CAMERAS:
+                savefile_dialog_path2, _ = QFileDialog.getSaveFileName(self, "Guardar", "", "All Files (*);;Text Files (*.txt)")
+                if savefile_dialog_path2:
+                    pixmap2 = self.currentimageframe2
+                    if not pixmap2.isNull():
+                        try:
+                            pixmap2.save(savefile_dialog_path2)
+                            self.show_info(f"Imagem Guardada: {savefile_dialog_path2}")
+                        except Exception as e:
+                            self.show_error(f"Erro ao Guardar a Imagem: {str(e)}")
+                    else:
+                        self.show_error(f"Erro: Não pode gravar uma imagem em branco.")
+
+    def save_file(self, filepath): #não implementado
         savefile_dialog_path, _ = QFileDialog.getSaveFileName(self, "Guardar", "", "All Files (*);;Text Files (*.txt)")
         if savefile_dialog_path:
             # Copy a file  to the chosen path
             with open(filepath, "rb") as src_file, open(savefile_dialog_path, "wb") as dest_file:
                 dest_file.write(src_file.read())
-
     def logs_save(self):
         savefile_dialog_path, _ = QFileDialog.getSaveFileName(self, "Guardar Ficheiro de Logs", "", "All Files (*);;Text Files (*.txt)")
         if savefile_dialog_path:
@@ -438,7 +488,7 @@ class MyApp(QMainWindow):                     #GUI CLASS
         elif sys.platform.startswith('linux'):
             subprocess.run(['xdg-open', file_path])
         else:
-            print("Unsupported operating system: Cannot open the file.")
+            self.show_info("Unsupported operating system: Cannot open the file.")
     
     def colorfilters_open(self):    
         self.colorfilters = ColorFilters()
@@ -500,12 +550,16 @@ class ColorFilters(QWidget):
         self.maxval_slider.setValue(config.getint('FILTER_CONFIG','max_value'))
         self.sataddsub_slider.setValue(config.getint('FILTER_CONFIG','saturation_booster'))
         self.valaddsub_slider.setValue(config.getint('FILTER_CONFIG','value_booster'))
+        self.blurkernelsize_slider.setValue(config.getint('FILTER_CONFIG','blur_kernelsize'))
+        self.gaussianblur_slider.setValue(config.getint('FILTER_CONFIG','gaussian_blur'))
         self.kernelsize_slider.setValue(config.getint('FILTER_CONFIG','kernelsize'))
-        self.erodelter_slider.setValue(config.getint('FILTER_CONFIG','erode'))
-        self.dilatelter_slider.setValue(config.getint('FILTER_CONFIG','dilate'))
+        self.cannyerode_slider.setValue(config.getint('FILTER_CONFIG','canny_erode'))
+        self.cannydilate_slider.setValue(config.getint('FILTER_CONFIG','canny_dilate'))
         self.canny1_slider.setValue(config.getint('FILTER_CONFIG','canny_1'))
         self.canny2_slider.setValue(config.getint('FILTER_CONFIG','canny_2'))
-        self.updatefiltervalues()
+        self.output_erode_slider.setValue(config.getint('FILTER_CONFIG','output_erode'))
+        self.output_dilate_slider.setValue(config.getint('FILTER_CONFIG','output_dilate'))
+
         self.minhue_spinbox.setValue(config.getint('FILTER_CONFIG','min_hue'))
         self.maxhue_spinbox.setValue(config.getint('FILTER_CONFIG','max_hue'))
         self.minsat_spinbox.setValue(config.getint('FILTER_CONFIG','min_saturation'))
@@ -514,18 +568,29 @@ class ColorFilters(QWidget):
         self.maxval_spinbox.setValue(config.getint('FILTER_CONFIG','max_value'))
         self.sataddsub_spinbox.setValue(config.getint('FILTER_CONFIG','saturation_booster'))
         self.valaddsub_spinbox.setValue(config.getint('FILTER_CONFIG','value_booster'))
+        self.blurkernelsize_spinbox.setValue(config.getint('FILTER_CONFIG','blur_kernelsize'))
+        self.gaussianblur_spinbox.setValue(config.getint('FILTER_CONFIG','gaussian_blur'))
         self.kernelsize_spinbox.setValue(config.getint('FILTER_CONFIG','kernelsize'))
-        self.erodelter_spinbox.setValue(config.getint('FILTER_CONFIG','erode'))
-        self.dilatelter_spinbox.setValue(config.getint('FILTER_CONFIG','dilate'))
+        self.cannyerode_spinbox.setValue(config.getint('FILTER_CONFIG','canny_erode'))
+        self.cannydilate_spinbox.setValue(config.getint('FILTER_CONFIG','canny_dilate'))
         self.canny1_spinbox.setValue(config.getint('FILTER_CONFIG','canny_1'))
         self.canny2_spinbox.setValue(config.getint('FILTER_CONFIG','canny_2'))
+        self.output_erode_spinbox.setValue(config.getint('FILTER_CONFIG','output_erode'))
+        self.output_dilate_spinbox.setValue(config.getint('FILTER_CONFIG','output_dilate'))
+
         self.canny_radiobt.setChecked(config.getboolean('FILTER_CONFIG','canny_edge_enabled'))
+        self.sobel_radiobt.setChecked(config.getboolean('FILTER_CONFIG','sobel_enabled'))
+        self.laplace_radiobt.setChecked(config.getboolean('FILTER_CONFIG','laplace_enabled'))
+        self.updatefiltervalues()
         self.enable_gui_controls()
 
         # Refresh when Changed
         self.reset_bt.clicked.connect(self.reset_values)
         self.close_bt.clicked.connect(self.close_widget)
-        self.canny_radiobt.toggled.connect(self.updateconfigfiltervalues)
+        self.canny_radiobt.toggled.connect(self.cannyactivated)
+        self.sobel_radiobt.toggled.connect(self.sobelactivated)
+        self.laplace_radiobt.toggled.connect(self.laplaceactivated)
+
         self.minhue_slider.valueChanged.connect(self.spinboxupdate)
         self.minsat_slider.valueChanged.connect(self.spinboxupdate)
         self.minval_slider.valueChanged.connect(self.spinboxupdate)
@@ -534,11 +599,15 @@ class ColorFilters(QWidget):
         self.maxval_slider.valueChanged.connect(self.spinboxupdate)
         self.sataddsub_slider.valueChanged.connect(self.spinboxupdate)
         self.valaddsub_slider.valueChanged.connect(self.spinboxupdate)
+        self.blurkernelsize_slider.valueChanged.connect(self.spinboxupdate)
+        self.gaussianblur_slider.valueChanged.connect(self.spinboxupdate)
         self.kernelsize_slider.valueChanged.connect(self.spinboxupdate)
-        self.erodelter_slider.valueChanged.connect(self.spinboxupdate)
-        self.dilatelter_slider.valueChanged.connect(self.spinboxupdate)
+        self.cannyerode_slider.valueChanged.connect(self.spinboxupdate)
+        self.cannydilate_slider.valueChanged.connect(self.spinboxupdate)
         self.canny1_slider.valueChanged.connect(self.spinboxupdate)
         self.canny2_slider.valueChanged.connect(self.spinboxupdate)
+        self.output_erode_slider.valueChanged.connect(self.spinboxupdate)
+        self.output_dilate_slider.valueChanged.connect(self.spinboxupdate)
 
         self.minhue_spinbox.valueChanged.connect(self.sliderupdate)
         self.minsat_spinbox.valueChanged.connect(self.sliderupdate)
@@ -548,11 +617,15 @@ class ColorFilters(QWidget):
         self.maxval_spinbox.valueChanged.connect(self.sliderupdate)
         self.sataddsub_spinbox.valueChanged.connect(self.sliderupdate)
         self.valaddsub_spinbox.valueChanged.connect(self.sliderupdate)
+        self.blurkernelsize_spinbox.valueChanged.connect(self.sliderupdate)
+        self.gaussianblur_spinbox.valueChanged.connect(self.sliderupdate)
         self.kernelsize_spinbox.valueChanged.connect(self.sliderupdate)
-        self.erodelter_spinbox.valueChanged.connect(self.sliderupdate)
-        self.dilatelter_spinbox.valueChanged.connect(self.sliderupdate)
+        self.cannyerode_spinbox.valueChanged.connect(self.sliderupdate)
+        self.cannydilate_spinbox.valueChanged.connect(self.sliderupdate)
         self.canny1_spinbox.valueChanged.connect(self.sliderupdate)
         self.canny2_spinbox.valueChanged.connect(self.sliderupdate)
+        self.output_erode_spinbox.valueChanged.connect(self.sliderupdate)
+        self.output_dilate_spinbox.valueChanged.connect(self.sliderupdate)
 
     def sliderupdate(self):
         self.minhue_slider.setValue(self.minhue_spinbox.value())
@@ -561,13 +634,18 @@ class ColorFilters(QWidget):
         self.maxhue_slider.setValue(self.maxhue_spinbox.value())
         self.maxsat_slider.setValue(self.maxsat_spinbox.value())
         self.maxval_slider.setValue(self.maxval_spinbox.value())
+        self.blurkernelsize_slider.setValue(self.blurkernelsize_spinbox.value())
+        self.gaussianblur_slider.setValue(self.gaussianblur_spinbox.value())
         self.sataddsub_slider.setValue(self.sataddsub_spinbox.value())
         self.valaddsub_slider.setValue(self.valaddsub_spinbox.value())
         self.kernelsize_slider.setValue(self.kernelsize_spinbox.value())
-        self.erodelter_slider.setValue(self.erodelter_spinbox.value())
-        self.dilatelter_slider.setValue(self.dilatelter_spinbox.value())
+        self.cannyerode_slider.setValue(self.cannyerode_spinbox.value())
+        self.cannydilate_slider.setValue(self.cannydilate_spinbox.value())
         self.canny1_slider.setValue(self.canny1_spinbox.value())
         self.canny2_slider.setValue(self.canny2_spinbox.value())
+        self.output_erode_slider.setValue(self.output_erode_spinbox.value())
+        self.output_dilate_slider.setValue(self.output_dilate_spinbox.value())
+        self.sliderupdate_kernelsize()
         self.updateconfigfiltervalues()
 
     def spinboxupdate(self):
@@ -577,15 +655,55 @@ class ColorFilters(QWidget):
         self.maxhue_spinbox.setValue(self.maxhue_slider.value())
         self.maxsat_spinbox.setValue(self.maxsat_slider.value())
         self.maxval_spinbox.setValue(self.maxval_slider.value())
+        self.blurkernelsize_spinbox.setValue(self.blurkernelsize_slider.value())
+        self.gaussianblur_spinbox.setValue(self.gaussianblur_slider.value())
         self.sataddsub_spinbox.setValue(self.sataddsub_slider.value())
         self.valaddsub_spinbox.setValue(self.valaddsub_slider.value())
         self.kernelsize_spinbox.setValue(self.kernelsize_slider.value())
-        self.erodelter_spinbox.setValue(self.erodelter_slider.value())
-        self.dilatelter_spinbox.setValue(self.dilatelter_slider.value())
+        self.cannyerode_spinbox.setValue(self.cannyerode_slider.value())
+        self.cannydilate_spinbox.setValue(self.cannydilate_slider.value())
         self.canny1_spinbox.setValue(self.canny1_slider.value())
         self.canny2_spinbox.setValue(self.canny2_slider.value())
+        self.output_erode_spinbox.setValue(self.output_erode_slider.value())
+        self.output_dilate_spinbox.setValue(self.output_dilate_slider.value())
+        self.spinboxupdate_kernelsize()
         self.updateconfigfiltervalues()
 
+    def sliderupdate_kernelsize(self):
+        if (self.blurkernelsize_spinbox.value()%2)==0: #check if is pair
+            self.blurkernelsize_spinbox.setValue(self.blurkernelsize_spinbox.value()+1) #if pair add 1
+        self.blurkernelsize_slider.setValue(self.blurkernelsize_spinbox.value()) #set slider value
+        if (self.sobel_radiobt.isChecked() or self.laplace_radiobt.isChecked()) and ((self.kernelsize_spinbox.value()%2)==0): #if sobel o laplace make the values odd too
+            self.kernelsize_spinbox.setValue(self.kernelsize_spinbox.value()+1) #if pair add 1
+        self.kernelsize_slider.setValue(self.kernelsize_spinbox.value()) #set slider value
+
+    def spinboxupdate_kernelsize(self):
+        if (self.blurkernelsize_slider.value()%2)==0: #check if is pair
+            self.blurkernelsize_slider.setValue(self.blurkernelsize_slider.value()+1) #if pair add 1
+        self.blurkernelsize_spinbox.setValue(self.blurkernelsize_slider.value()) #set spinbox value
+        if (self.sobel_radiobt.isChecked() or self.laplace_radiobt.isChecked()) and ((self.kernelsize_slider.value()%2)==0): #if sobel o laplace make the values odd too
+            self.kernelsize_slider.setValue(self.kernelsize_slider.value()+1) #if pair add 1
+        self.kernelsize_spinbox.setValue(self.kernelsize_slider.value()) #set spinbox value
+
+    def cannyactivated(self, checked):
+        if checked:
+            self.sobel_radiobt.setChecked(False)
+            self.laplace_radiobt.setChecked(False)
+        self.updateconfigfiltervalues()
+        self.spinboxupdate_kernelsize()
+    def sobelactivated(self, checked):
+        if checked:
+            self.canny_radiobt.setChecked(False)
+            self.laplace_radiobt.setChecked(False)
+        self.updateconfigfiltervalues()
+        self.spinboxupdate_kernelsize()
+    def laplaceactivated(self, checked):
+        if checked:
+            self.canny_radiobt.setChecked(False)
+            self.sobel_radiobt.setChecked(False)
+        self.updateconfigfiltervalues()
+        self.spinboxupdate_kernelsize()
+        
     def updateconfigfiltervalues(self):
         config.set('FILTER_CONFIG', 'min_hue', str(self.minhue_slider.value()))
         config.set('FILTER_CONFIG', 'max_hue', str(self.maxhue_slider.value()))
@@ -593,14 +711,20 @@ class ColorFilters(QWidget):
         config.set('FILTER_CONFIG', 'max_saturation', str(self.maxsat_slider.value()))
         config.set('FILTER_CONFIG', 'min_value', str(self.minval_slider.value()))
         config.set('FILTER_CONFIG', 'max_value', str(self.maxval_slider.value()))
+        config.set('FILTER_CONFIG', 'blur_kernelsize', str(self.blurkernelsize_slider.value()))
+        config.set('FILTER_CONFIG', 'gaussian_blur', str(self.gaussianblur_slider.value()))
         config.set('FILTER_CONFIG', 'saturation_booster', str(self.sataddsub_slider.value()))
         config.set('FILTER_CONFIG', 'value_booster', str(self.valaddsub_slider.value()))
         config.set('FILTER_CONFIG', 'kernelsize', str(self.kernelsize_slider.value()))
-        config.set('FILTER_CONFIG', 'erode', str(self.erodelter_slider.value()))
-        config.set('FILTER_CONFIG', 'dilate', str(self.dilatelter_slider.value()))
+        config.set('FILTER_CONFIG', 'canny_erode', str(self.cannyerode_slider.value()))
+        config.set('FILTER_CONFIG', 'canny_dilate', str(self.cannydilate_slider.value()))
         config.set('FILTER_CONFIG', 'canny_1', str(self.canny1_slider.value()))
         config.set('FILTER_CONFIG', 'canny_2', str(self.canny2_slider.value()))
         config.set('FILTER_CONFIG', 'canny_edge_enabled', str(self.canny_radiobt.isChecked()))
+        config.set('FILTER_CONFIG', 'sobel_enabled', str(self.sobel_radiobt.isChecked()))
+        config.set('FILTER_CONFIG', 'laplace_enabled', str(self.laplace_radiobt.isChecked()))
+        config.set('FILTER_CONFIG', 'output_erode', str(self.output_erode_slider.value()))
+        config.set('FILTER_CONFIG', 'output_dilate', str(self.output_dilate_slider.value()))
         self.updatefiltervalues()
 
          # Save the changes
@@ -611,6 +735,9 @@ class ColorFilters(QWidget):
     def updatefiltervalues(self):
         global filter
         filter = Filter()
+        filter.enablecanny = self.canny_radiobt.isChecked()
+        filter.enablesobel = self.sobel_radiobt.isChecked()
+        filter.enablelaplace = self.laplace_radiobt.isChecked()
         filter.minhue = self.minhue_slider.value()
         filter.minsat = self.minsat_slider.value()
         filter.minval = self.minval_slider.value()
@@ -619,12 +746,15 @@ class ColorFilters(QWidget):
         filter.maxval = self.maxval_slider.value()
         filter.sat_addsub = self.sataddsub_slider.value()
         filter.val_addsub = self.valaddsub_slider.value()
+        filter.blurkernelsize = self.blurkernelsize_slider.value()
+        filter.gaussianblur = self.gaussianblur_slider.value()
         filter.kernelsize = self.kernelsize_slider.value()
-        filter.erode = self.erodelter_slider.value()
-        filter.dilate = self.dilatelter_slider.value()
+        filter.cannyerode = self.cannyerode_slider.value()
+        filter.cannydilate = self.cannydilate_slider.value()
         filter.canny1 = self.canny1_slider.value()
         filter.canny2 = self.canny2_slider.value()
-        filter.enablecanny = self.canny_radiobt.isChecked()
+        filter.output_erode = self.output_erode_slider.value()
+        filter.output_dilate = self.output_dilate_slider.value()
         self.enable_gui_controls()
 
         return filter
@@ -633,26 +763,49 @@ class ColorFilters(QWidget):
         if filter.enablecanny or self.canny_radiobt.isChecked():
             self.kernelsize_slider.setEnabled(True)
             self.kernelsize_spinbox.setEnabled(True)
-            self.erodelter_slider.setEnabled(True)
-            self.erodelter_spinbox.setEnabled(True)
-            self.dilatelter_slider.setEnabled(True)
-            self.dilatelter_spinbox.setEnabled(True)
+            self.cannyerode_slider.setEnabled(True)
+            self.cannyerode_spinbox.setEnabled(True)
+            self.cannydilate_slider.setEnabled(True)
+            self.cannydilate_spinbox.setEnabled(True)
             self.canny1_slider.setEnabled(True)
             self.canny1_spinbox.setEnabled(True)
             self.canny2_slider.setEnabled(True)
             self.canny2_spinbox.setEnabled(True)
+            self.output_erode_slider.setEnabled(True)
+            self.output_erode_spinbox.setEnabled(True)
+            self.output_dilate_slider.setEnabled(True)
+            self.output_dilate_spinbox.setEnabled(True)
+        elif filter.enablesobel or self.sobel_radiobt.isChecked():
+            self.kernelsize_slider.setEnabled(True)
+            self.kernelsize_spinbox.setEnabled(True)
+            self.output_erode_slider.setEnabled(True)
+            self.output_erode_spinbox.setEnabled(True)
+            self.output_dilate_slider.setEnabled(True)
+            self.output_dilate_spinbox.setEnabled(True)
+        elif filter.enablelaplace or self.laplace_radiobt.isChecked():
+            self.kernelsize_slider.setEnabled(True)
+            self.kernelsize_spinbox.setEnabled(True)
+            self.output_erode_slider.setEnabled(True)
+            self.output_erode_spinbox.setEnabled(True)
+            self.output_dilate_slider.setEnabled(True)
+            self.output_dilate_spinbox.setEnabled(True)
         else:
             self.kernelsize_slider.setEnabled(False)
             self.kernelsize_spinbox.setEnabled(False)
-            self.erodelter_slider.setEnabled(False)
-            self.erodelter_spinbox.setEnabled(False)
-            self.dilatelter_slider.setEnabled(False)
-            self.dilatelter_spinbox.setEnabled(False)
+            self.cannyerode_slider.setEnabled(False)
+            self.cannyerode_spinbox.setEnabled(False)
+            self.cannydilate_slider.setEnabled(False)
+            self.cannydilate_spinbox.setEnabled(False)
             self.canny1_slider.setEnabled(False)
             self.canny1_spinbox.setEnabled(False)
             self.canny2_slider.setEnabled(False)
             self.canny2_spinbox.setEnabled(False)
-    
+            self.output_erode_slider.setEnabled(False)
+            self.output_erode_spinbox.setEnabled(False)
+            self.output_dilate_slider.setEnabled(False)
+            self.output_dilate_spinbox.setEnabled(False)
+
+
     def reset_values(self):
         self.minhue_slider.setValue(0)
         self.maxhue_slider.setValue(179)
@@ -662,11 +815,17 @@ class ColorFilters(QWidget):
         self.maxval_slider.setValue(255)
         self.sataddsub_slider.setValue(0)
         self.valaddsub_slider.setValue(0)
+        self.gaussianblur_slider.setValue(0)
         self.kernelsize_slider.setValue(1)
-        self.erodelter_slider.setValue(1)
-        self.dilatelter_slider.setValue(1)
+        self.cannyerode_slider.setValue(1)
+        self.cannydilate_slider.setValue(1)
         self.canny1_slider.setValue(0)
         self.canny2_slider.setValue(0)
+        self.canny_radiobt.setChecked(False)
+        self.sobel_radiobt.setChecked(False)
+        self.laplace_radiobt.setChecked(False)
+        self.output_erode_slider.setValue(0)
+        self.output_dilate_slider.setValue(0)
         self.spinboxupdate()
     
     def close_widget(self):
@@ -735,12 +894,17 @@ filter.maxsat = config.getint('FILTER_CONFIG','min_value')
 filter.maxval = config.getint('FILTER_CONFIG','max_value')
 filter.sat_addsub = config.getint('FILTER_CONFIG','saturation_booster')
 filter.val_addsub = config.getint('FILTER_CONFIG','value_booster')
+filter.gaussianblur = config.getint('FILTER_CONFIG','gaussian_blur')
 filter.kernelsize = config.getint('FILTER_CONFIG','kernelsize')
-filter.erode = config.getint('FILTER_CONFIG','erode')
-filter.dilate = config.getint('FILTER_CONFIG','dilate')
+filter.cannyerode = config.getint('FILTER_CONFIG','canny_erode')
+filter.cannydilate = config.getint('FILTER_CONFIG','canny_dilate')
 filter.canny1 = config.getint('FILTER_CONFIG','canny_1')
 filter.canny2 = config.getint('FILTER_CONFIG','canny_2')
 filter.enablecanny = config.get('FILTER_CONFIG','canny_edge_enabled')
+filter.enablesobel = config.get('FILTER_CONFIG', 'sobel_enabled')
+filter.enablelaplace = config.get('FILTER_CONFIG', 'laplace_enabled')
+filter.output_erode = config.get('FILTER_CONFIG', 'output_erode')
+filter.output_dilate = config.get('FILTER_CONFIG', 'output_dilate')
 # ======================== \\-// ========================
 
 # ========== CONSTRUCTOR ==========   

@@ -7,3 +7,5 @@
 FILTROS:
 adicionar laplace
 adicionar sobel
+
+meter uma alertbox para resumir ou reiniciar o video

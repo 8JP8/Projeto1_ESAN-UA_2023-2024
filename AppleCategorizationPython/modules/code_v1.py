@@ -55,13 +55,22 @@ LOG_FILE_PATH = config.get('LOGS_CONFIG', 'LOGS_FILE_PATH')
 
 
 # Load the class names from coco.names
-with open(config.get('DEPENDENCIES_CONFIG', 'MODEL_'+DETECTIONMODE_VALUE+'_NAMES_FILE_PATH'), 'r') as file:
-    class_names = file.read().strip().split('\n')
+try:
+    with open(config.get('DEPENDENCIES_CONFIG', 'MODEL_'+DETECTIONMODE_VALUE+'_NAMES_FILE_PATH'), 'r') as file:
+        class_names = file.read().strip().split('\n')
 
-# Initialize the Keras model for apple classification
-model = load_model(config.get('DEPENDENCIES_CONFIG', 'MODEL_'+CATEGORIZATIONMODE_VALUE+'_CATEGORIZATION_FILE_PATH'))
-# Load Identification Model YOLO configuration and weights
-net = cv2.dnn.readNet(config.get('DEPENDENCIES_CONFIG', 'MODEL_'+DETECTIONMODE_VALUE+'_WEIGHTS_FILE_PATH'), config.get('DEPENDENCIES_CONFIG', 'MODEL_'+DETECTIONMODE_VALUE+'_WEIGHTS_CFG_PATH'))
+    # Initialize the Keras model for apple classification
+    model = load_model(config.get('DEPENDENCIES_CONFIG', 'MODEL_'+CATEGORIZATIONMODE_VALUE+'_CATEGORIZATION_FILE_PATH'))
+    # Load Identification Model YOLO configuration and weights
+    net = cv2.dnn.readNet(config.get('DEPENDENCIES_CONFIG', 'MODEL_'+DETECTIONMODE_VALUE+'_WEIGHTS_FILE_PATH'), config.get('DEPENDENCIES_CONFIG', 'MODEL_'+DETECTIONMODE_VALUE+'_WEIGHTS_CFG_PATH'))
+except:
+    with open(config.get('DEPENDENCIES_CONFIG', 'MODEL_0_NAMES_FILE_PATH'), 'r') as file:
+        class_names = file.read().strip().split('\n')
+
+    # Initialize the Keras model for apple classification
+    model = load_model(config.get('DEPENDENCIES_CONFIG', 'MODEL_0_CATEGORIZATION_FILE_PATH'))
+    # Load Identification Model YOLO configuration and weights
+    net = cv2.dnn.readNet(config.get('DEPENDENCIES_CONFIG', 'MODEL_0_WEIGHTS_FILE_PATH'), config.get('DEPENDENCIES_CONFIG', 'MODEL_0_WEIGHTS_CFG_PATH'))
 
 # Function to calculate the intersection over union (IoU) between two bounding boxes
 def calculate_iou(box1, box2):

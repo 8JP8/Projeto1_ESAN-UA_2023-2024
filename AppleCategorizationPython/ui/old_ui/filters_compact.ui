@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>414</width>
-    <height>671</height>
+    <height>678</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -101,7 +101,7 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>Min Hue     ⠀      </string>
+        <string>Hue Range          </string>
        </property>
        <property name="scaledContents">
         <bool>false</bool>
@@ -181,23 +181,6 @@
        </property>
       </widget>
      </item>
-    </layout>
-   </item>
-   <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_4">
-     <item>
-      <widget class="QLabel" name="maxhue_lb">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string>Max Hue            </string>
-       </property>
-      </widget>
-     </item>
      <item>
       <spacer name="horizontalSpacer_4">
        <property name="orientation">
@@ -226,22 +209,6 @@
         <enum>Qt::Horizontal</enum>
        </property>
       </widget>
-     </item>
-     <item>
-      <spacer name="horizontalSpacer_9">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeType">
-        <enum>QSizePolicy::Preferred</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>10</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
      </item>
      <item>
       <widget class="QSpinBox" name="maxhue_spinbox">
@@ -284,7 +251,7 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>Min Saturation   </string>
+        <string>Saturation Range</string>
        </property>
       </widget>
      </item>
@@ -361,23 +328,6 @@
        </property>
       </widget>
      </item>
-    </layout>
-   </item>
-   <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_5">
-     <item>
-      <widget class="QLabel" name="maxsat_lb">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string>Max Saturation   </string>
-       </property>
-      </widget>
-     </item>
      <item>
       <spacer name="horizontalSpacer_3">
        <property name="orientation">
@@ -406,22 +356,6 @@
         <enum>Qt::Horizontal</enum>
        </property>
       </widget>
-     </item>
-     <item>
-      <spacer name="horizontalSpacer_8">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeType">
-        <enum>QSizePolicy::Preferred</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>10</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
      </item>
      <item>
       <widget class="QSpinBox" name="maxsat_spinbox">
@@ -464,7 +398,7 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>Min Value   ⠀      </string>
+        <string>Value Range        </string>
        </property>
       </widget>
      </item>
@@ -535,26 +469,6 @@
        </property>
       </widget>
      </item>
-    </layout>
-   </item>
-   <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_6">
-     <item>
-      <widget class="QLabel" name="maxval_lb">
-       <property name="enabled">
-        <bool>true</bool>
-       </property>
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string>Max Value    ⠀    </string>
-       </property>
-      </widget>
-     </item>
      <item>
       <spacer name="horizontalSpacer_2">
        <property name="orientation">
@@ -583,22 +497,6 @@
         <enum>Qt::Horizontal</enum>
        </property>
       </widget>
-     </item>
-     <item>
-      <spacer name="horizontalSpacer_7">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeType">
-        <enum>QSizePolicy::Preferred</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>10</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
      </item>
      <item>
       <widget class="QSpinBox" name="maxval_spinbox">
@@ -641,7 +539,7 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>± Saturation      </string>
+        <string>± Saturation        </string>
        </property>
       </widget>
      </item>
@@ -811,112 +709,7 @@
     </layout>
    </item>
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_18">
-     <item>
-      <widget class="QLabel" name="blurkernelsize_lb">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string>Blur KernelSize    </string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <spacer name="horizontalSpacer_35">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeType">
-        <enum>QSizePolicy::Preferred</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>10</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item>
-      <widget class="QSlider" name="blurkernelsize_slider">
-       <property name="enabled">
-        <bool>true</bool>
-       </property>
-       <property name="minimum">
-        <number>1</number>
-       </property>
-       <property name="maximum">
-        <number>31</number>
-       </property>
-       <property name="pageStep">
-        <number>1</number>
-       </property>
-       <property name="value">
-        <number>1</number>
-       </property>
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <spacer name="horizontalSpacer_36">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeType">
-        <enum>QSizePolicy::Preferred</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>10</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item>
-      <widget class="QSpinBox" name="blurkernelsize_spinbox">
-       <property name="enabled">
-        <bool>true</bool>
-       </property>
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="minimumSize">
-        <size>
-         <width>47</width>
-         <height>0</height>
-        </size>
-       </property>
-       <property name="inputMethodHints">
-        <set>Qt::ImhDigitsOnly</set>
-       </property>
-       <property name="minimum">
-        <number>1</number>
-       </property>
-       <property name="maximum">
-        <number>31</number>
-       </property>
-       <property name="singleStep">
-        <number>2</number>
-       </property>
-       <property name="displayIntegerBase">
-        <number>10</number>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_17">
+    <layout class="QHBoxLayout" name="horizontalLayout_16">
      <item>
       <widget class="QLabel" name="gaussianblue_lb">
        <property name="sizePolicy">
@@ -926,7 +719,7 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>Gaussian Blur     </string>
+        <string>Gaussian Blur      </string>
        </property>
       </widget>
      </item>
@@ -1022,7 +815,7 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>KernelSize            </string>
+        <string>KernelSize          </string>
        </property>
       </widget>
      </item>
@@ -1051,7 +844,7 @@
         <number>1</number>
        </property>
        <property name="maximum">
-        <number>31</number>
+        <number>30</number>
        </property>
        <property name="pageStep">
         <number>1</number>
@@ -1104,7 +897,7 @@
         <number>1</number>
        </property>
        <property name="maximum">
-        <number>31</number>
+        <number>30</number>
        </property>
       </widget>
      </item>
@@ -1113,7 +906,7 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_12">
      <item>
-      <widget class="QLabel" name="cannyerode_lb">
+      <widget class="QLabel" name="erode_lb">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
          <horstretch>0</horstretch>
@@ -1121,7 +914,7 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>Canny Erode       </string>
+        <string>Canny Erode         </string>
        </property>
       </widget>
      </item>
@@ -1209,7 +1002,7 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_15">
      <item>
-      <widget class="QLabel" name="cannydilate_lb">
+      <widget class="QLabel" name="dilate_lb">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
          <horstretch>0</horstretch>
@@ -1217,7 +1010,7 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>Canny Dilate       </string>
+        <string>Canny Dilate         </string>
        </property>
       </widget>
      </item>
@@ -1313,7 +1106,7 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>Min Canny          </string>
+        <string>Canny                   </string>
        </property>
       </widget>
      </item>
@@ -1392,24 +1185,7 @@
         <number>0</number>
        </property>
        <property name="maximum">
-        <number>255</number>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_13">
-     <item>
-      <widget class="QLabel" name="canny2_lb">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string>Max Canny         </string>
+        <number>200</number>
        </property>
       </widget>
      </item>
@@ -1487,17 +1263,14 @@
        <property name="minimum">
         <number>0</number>
        </property>
-       <property name="maximum">
-        <number>255</number>
-       </property>
       </widget>
      </item>
     </layout>
    </item>
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_21">
+    <layout class="QHBoxLayout" name="horizontalLayout_17">
      <item>
-      <widget class="QLabel" name="output_erode_lb_2">
+      <widget class="QLabel" name="output_erode_lb">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
          <horstretch>0</horstretch>
@@ -1510,7 +1283,7 @@
       </widget>
      </item>
      <item>
-      <spacer name="horizontalSpacer_41">
+      <spacer name="horizontalSpacer_35">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
@@ -1528,16 +1301,16 @@
      <item>
       <widget class="QSlider" name="output_erode_slider">
        <property name="enabled">
-        <bool>true</bool>
+        <bool>false</bool>
        </property>
        <property name="minimum">
-        <number>1</number>
+        <number>0</number>
        </property>
        <property name="maximum">
-        <number>5</number>
+        <number>500</number>
        </property>
        <property name="value">
-        <number>1</number>
+        <number>0</number>
        </property>
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
@@ -1545,7 +1318,7 @@
       </widget>
      </item>
      <item>
-      <spacer name="horizontalSpacer_42">
+      <spacer name="horizontalSpacer_36">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
@@ -1563,7 +1336,7 @@
      <item>
       <widget class="QSpinBox" name="output_erode_spinbox">
        <property name="enabled">
-        <bool>true</bool>
+        <bool>false</bool>
        </property>
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -1581,19 +1354,19 @@
         <set>Qt::ImhDigitsOnly</set>
        </property>
        <property name="minimum">
-        <number>1</number>
+        <number>0</number>
        </property>
        <property name="maximum">
-        <number>5</number>
+        <number>500</number>
        </property>
       </widget>
      </item>
     </layout>
    </item>
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_20">
+    <layout class="QHBoxLayout" name="horizontalLayout_18">
      <item>
-      <widget class="QLabel" name="output_dilate_lb_2">
+      <widget class="QLabel" name="output_dilate_lb">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
          <horstretch>0</horstretch>
@@ -1606,7 +1379,7 @@
       </widget>
      </item>
      <item>
-      <spacer name="horizontalSpacer_39">
+      <spacer name="horizontalSpacer_37">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
@@ -1624,16 +1397,16 @@
      <item>
       <widget class="QSlider" name="output_dilate_slider">
        <property name="enabled">
-        <bool>true</bool>
+        <bool>false</bool>
        </property>
        <property name="minimum">
-        <number>1</number>
+        <number>0</number>
        </property>
        <property name="maximum">
-        <number>5</number>
+        <number>500</number>
        </property>
        <property name="value">
-        <number>1</number>
+        <number>0</number>
        </property>
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
@@ -1641,7 +1414,7 @@
       </widget>
      </item>
      <item>
-      <spacer name="horizontalSpacer_40">
+      <spacer name="horizontalSpacer_38">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
@@ -1659,7 +1432,7 @@
      <item>
       <widget class="QSpinBox" name="output_dilate_spinbox">
        <property name="enabled">
-        <bool>true</bool>
+        <bool>false</bool>
        </property>
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -1677,17 +1450,17 @@
         <set>Qt::ImhDigitsOnly</set>
        </property>
        <property name="minimum">
-        <number>1</number>
+        <number>0</number>
        </property>
        <property name="maximum">
-        <number>5</number>
+        <number>500</number>
        </property>
       </widget>
      </item>
     </layout>
    </item>
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_16">
+    <layout class="QHBoxLayout" name="horizontalLayout_10">
      <item>
       <widget class="QLabel" name="canny2_lb_2">
        <property name="sizePolicy">
@@ -1702,7 +1475,7 @@
       </widget>
      </item>
      <item>
-      <spacer name="horizontalSpacer_29">
+      <spacer name="horizontalSpacer_30">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
@@ -1729,12 +1502,12 @@
         <bool>false</bool>
        </property>
        <property name="autoExclusive">
-        <bool>false</bool>
+        <bool>true</bool>
        </property>
       </widget>
      </item>
      <item>
-      <spacer name="horizontalSpacer_30">
+      <spacer name="horizontalSpacer_31">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
@@ -1758,12 +1531,12 @@
         <string>Sobel</string>
        </property>
        <property name="autoExclusive">
-        <bool>false</bool>
+        <bool>true</bool>
        </property>
       </widget>
      </item>
      <item>
-      <spacer name="horizontalSpacer_31">
+      <spacer name="horizontalSpacer_29">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
@@ -1787,25 +1560,9 @@
         <string>Laplace</string>
        </property>
        <property name="autoExclusive">
-        <bool>false</bool>
+        <bool>true</bool>
        </property>
       </widget>
-     </item>
-     <item>
-      <spacer name="horizontalSpacer_32">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeType">
-        <enum>QSizePolicy::Preferred</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>13</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
      </item>
     </layout>
    </item>
