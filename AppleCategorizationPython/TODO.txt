@@ -1,11 +1,7 @@
-- Salvar o Conteúdo do Vídeo em frames ou quando terminar a análise gravar temporariamente para depois o user decidir se quer gravar e onde
 - Meter mais prompts
-- Meter outras tecnologias de deteção
 - Separar as Funções por Módulos para fácil leitura
 - Testar com 2 Câmaras
+- Meter uma alertbox para resumir ou reiniciar o video
+- Meter outras tecnologias de deteção
+- Salvar o Conteúdo do Vídeo em frames ou quando terminar a análise gravar temporariamente para depois o user decidir se quer gravar e onde
 
-FILTROS:
-adicionar laplace
-adicionar sobel
-
-meter uma alertbox para resumir ou reiniciar o video
