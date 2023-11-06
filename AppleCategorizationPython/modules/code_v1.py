@@ -6,7 +6,7 @@ from keras.applications.mobilenet_v2 import preprocess_input
 import configparser
 import datetime
 import os
-from modules import MathFunctions
+import modules.MathFunctions as MathFunctions
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
@@ -19,7 +19,7 @@ config.read('../config.ini')
 #output_dir = '../outputs'
 #os.makedirs(output_dir, exist_ok=True)
 
-global USE_TWO_CAMERAS,CAMERA_INDEX_LEFT,CAMERA_INDEX_RIGHT,CAMERA_PRESENT,PIXEL_SEPARATION,DIAMETER_SEPARATION, DETECTIONMODE_VALUE, CATEGORIZATIONMODE_VALUE
+global USE_TWO_CAMERAS,CAMERA_INDEX_LEFT,CAMERA_INDEX_RIGHT,PIXEL_SEPARATION,DIAMETER_SEPARATION, DETECTIONMODE_VALUE, CATEGORIZATIONMODE_VALUE
 
 # Variable Configuration
 USE_TWO_CAMERAS = config.getboolean('CAMERA_CONFIG', 'USE_TWO_CAMERAS')       # Set to True if using two cameras for stereo vision
@@ -31,6 +31,10 @@ CAMERA_CALC_DIAMETER = config.getboolean('CAMERA_CONFIG', 'CAMERA_CALC_DIAMETER'
 CAMERA_HEIGHT = config.getfloat('CAMERA_CONFIG', 'CAMERA_HEIGHT')
 CAMERA_DISTANCE = config.getfloat('CAMERA_CONFIG', 'CAMERA_DISTANCE')
 CAMERA_FOV = config.getint('CAMERA_CONFIG', 'CAMERA_FOV')
+FOCAL_LENGHT = config.getint('CAMERA_CONFIG', 'FOCAL_LENGHT')
+SENSOR_WIDTH = config.getint('CAMERA_CONFIG', 'SENSOR_WIDTH')
+SQUARE_SIZE = config.getfloat('CAMERA_CONFIG', 'SQUARE_SIZE')
+APPLE_Z = config.getfloat('CAMERA_CONFIG', 'APPLE_Z')
 
 # Define separation values for small and big apples (in pixels or actual diameter)
 PIXEL_SEPARATION = config.getfloat('CAMERA_CONFIG', 'PIXEL_SEPARATION')              # Placeholder value for pixel-related separation
@@ -48,6 +52,7 @@ cap_right = None
 cap = None
 apple_count = None
 roi = None
+calibration_inprogress = False
 LOG_FILE_PATH = config.get('LOGS_CONFIG', 'LOGS_FILE_PATH')
 
 # ============ \\--// ============
@@ -87,6 +92,7 @@ def calculate_iou(box1, box2):
     box1_area = (x2 - x1 + 1) * (y2 - y1 + 1)
     box2_area = (x4 - x3 + 1) * (y4 - y3 + 1)
 
+    # Calculate the IoU
     iou = intersection_area / float(box1_area + box2_area - intersection_area)
     return iou
 
@@ -107,10 +113,10 @@ def determine_apple_type(pixel_caliber, diameter, categorization_confidence):
             return "Small Apple"
 
 # Function to perform apple detection and classification
-def detect_and_classify_apples(frame, type, threshold1, threshold2):
+def detect_and_classify_apples(frame, type, threshold1, threshold2, calibresult):
     THRESHOLD_1 = threshold1
     THRESHOLD_2 = threshold2
-    UpdateConfigValues()
+
     height, width, _ = frame.shape
 
     blob = cv2.dnn.blobFromImage(frame, 1/255.0, (416, 416), swapRB=True, crop=False)
@@ -122,6 +128,7 @@ def detect_and_classify_apples(frame, type, threshold1, threshold2):
     apple_boxes = []
     apple_certainties = []
     apple_diameters = []
+    apple_corners = []  # List to store apple corner coordinates
 
     for detection in detections:
         for obj in detection:
@@ -154,7 +161,7 @@ def detect_and_classify_apples(frame, type, threshold1, threshold2):
 
                     if apple.shape[0] > 0 and apple.shape[1] > 0:
                         if apple.shape[0] != 100 or apple.shape[1] != 100:
-                           apple = cv2.resize(apple, (100, 100))
+                            apple = cv2.resize(apple, (100, 100))
 
                         apple = img_to_array(apple)
                         apple = preprocess_input(apple)
@@ -165,9 +172,47 @@ def detect_and_classify_apples(frame, type, threshold1, threshold2):
                         categorization_confidence = prediction[0][0]
 
                         pixel_caliber = w  # Use the pixel width as pixel_caliber
+
+                        # Store the corners of the detected apple
+                        
+                        apple_corners = np.array([
+                            [x, y],
+                            [x+w, y],
+                            [x, y+h],
+                            [x+w, y+h]
+                        ], dtype=np.float32)
+
+                        apple_quadrants = np.array([
+                            [x+w/2, y],
+                            [x, y+h/2],
+                            [x+w/2, y+h],
+                            [x+w, y+h/2]
+                        ], dtype=np.float32)
+
+
                         if CAMERA_CALC_DIAMETER:
-                            # Placeholder values:
-                            diameter = round(MathFunctions.pixels_to_cm(pixel_caliber, CAMERA_HEIGHT, CAMERA_FOV, CAMERA_DISTANCE), 2)
+                            #Get width information
+                            if calibresult != None and config.getboolean('CAMERA_CONFIG', 'USE_CAMERA_CALIBRATION'):
+                                global APPLE_Z
+                                measuredwidth = MathFunctions.calculate_apple_width_in_mm(apple_quadrants, SENSOR_WIDTH, calibresult[2], calibresult[3], calibresult[4], calibresult[5], APPLE_Z, SQUARE_SIZE)
+                                '''
+                                while True:
+                                    Erro = APPLE_Z - measuredwidth/2
+                                    if abs(Erro) > 0.05:
+                                        if Erro < 0:
+                                            APPLE_Z+=Erro/2
+                                        else:
+                                            APPLE_Z-=Erro/2
+                                    else:
+                                        print("Erro:",Erro," Z:",APPLE_Z)
+                                        break
+
+                                    measuredwidth = MathFunctions.calculate_apple_width_in_mm(apple_quadrants, SENSOR_WIDTH, calibresult[2], calibresult[3], calibresult[4], calibresult[5], APPLE_Z, SQUARE_SIZE)
+                                '''
+                                diameter = round(measuredwidth, 2)
+                            else:
+                                diameter = round(MathFunctions.pixels_to_cm(pixel_caliber, CAMERA_HEIGHT, CAMERA_FOV, CAMERA_DISTANCE), 2)
+
                         else:
                             # Use single camera processing here (calculate diameter based on single image)
                             # Placeholder values:
@@ -176,7 +221,7 @@ def detect_and_classify_apples(frame, type, threshold1, threshold2):
                         # Determine apple type
                         apple_type = determine_apple_type(pixel_caliber, diameter, categorization_confidence)
 
-                        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        timestamp = datetime.datetime.now().strftime("%Y-%m-d %H:%M:%S")
 
                         # Log the apple's data
                         with open(LOG_FILE_PATH, 'a') as log:
@@ -187,6 +232,7 @@ def detect_and_classify_apples(frame, type, threshold1, threshold2):
                         apple_boxes.append((x, y, w, h))
                         apple_certainties.append(categorization_confidence)
                         apple_diameters.append(diameter)
+                        
 
                         # Draw text in the center of the detected apple
                         if CAMERA_CALC_DIAMETER:
@@ -205,10 +251,8 @@ def detect_and_classify_apples(frame, type, threshold1, threshold2):
                         # Draw a circle around the object contour
                         cv2.circle(frame, (center_x, center_y), int((w + h) / 4), color, 2)
 
-    return frame
-
-
-########################################################
+    else:
+        return frame
 
 
 # Log file setup
