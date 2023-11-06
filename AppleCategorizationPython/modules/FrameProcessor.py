@@ -1,6 +1,8 @@
 from PyQt6.QtWidgets import QApplication, QMainWindow, QMessageBox, QPushButton
 from PyQt6.QtGui import QIcon
 from modules import code_v1
+from modules import MathFunctions
+import main
 import cv2
 import os
 import numpy as np
@@ -11,13 +13,19 @@ config = configparser.ConfigParser()
 config.read('../config.ini')  # Replace 'config.ini' with the path to your configuration file
 
 currentvideopath = ""
-applyfilters = config.getboolean('FILTER_CONFIG', 'apply_filters')
+calibration_inprogress = False
+APPLYFILTERS = config.getboolean('FILTER_CONFIG', 'APPLY_FILTERS')
+USE_CAMERA_CALIBRATION = config.getboolean('CAMERA_CONFIG', 'USE_CAMERA_CALIBRATION')
+CHESSBOARD_INTERSECTION_LINES = config.getint('CAMERA_CONFIG', 'CHESSBOARD_INTERSECTION_LINES')
+CHESSBOARD_INTERSECTION_COLUMNS = config.getint('CAMERA_CONFIG', 'CHESSBOARD_INTERSECTION_COLUMNS')
+DRAW_CALIBRATION_LINES = config.getboolean('CAMERA_CONFIG', 'DRAW_CALIBRATION_LINES')
+
 
 def ImageProcessor(img_filepath, frame, threshold1, threshold2, filter):
     if os.path.isfile(img_filepath):
         try:
-            frame = code_v1.detect_and_classify_apples(frame, "image", threshold1, threshold2)
-            if applyfilters and filter!=None:
+            frame = code_v1.detect_and_classify_apples(frame, "image", threshold1, threshold2, None)
+            if APPLYFILTERS and filter!=None:
                 frame = ApplyFilters(frame, filter)
             return (True, frame)
         except:
@@ -33,8 +41,8 @@ def VideoProcessor(vd_filepath, frame, threshold1, threshold2, filter):
             if not cap.isOpened():
                 return (False, f"Erro: Não foi possível abrir o ficheiro '{os.path.basename(vd_filepath)}'.")
             else:
-                newframe = code_v1.detect_and_classify_apples(frame, "video", threshold1, threshold2)
-                if applyfilters and filter!=None:
+                newframe = code_v1.detect_and_classify_apples(frame, "video", threshold1, threshold2, None)
+                if APPLYFILTERS and filter!=None:
                     newframe = ApplyFilters(newframe, filter)
                 return (True, newframe)
         else:
@@ -42,32 +50,30 @@ def VideoProcessor(vd_filepath, frame, threshold1, threshold2, filter):
     else:
         try:
             newframe = code_v1.detect_and_classify_apples(frame, "video")
-            if applyfilters and filter!=None:
+            if APPLYFILTERS and filter!=None:
                 newframe = ApplyFilters(newframe, filter)
             return (True, newframe)
         except:
             return(False, f"Erro: Não foi possível abrir o ficheiro '{os.path.basename(vd_filepath)}'.")
         
 def CameraProcessor(self, inputframe, threshold1, threshold2, filter):
+    calibresult = cameracalibrationprocessor(inputframe)
+    if calibresult != None:
+        inputframe = calibresult[1]
     # Detect and classify apples and update the frame
     try:
-        frame = code_v1.detect_and_classify_apples(inputframe, "camera", threshold1, threshold2)
-    except:
-        try:
-            frame = code_v1.detect_and_classify_apples(inputframe, "camera", threshold1, threshold2)
-        except:
-            try: #Try 3 times to display frames before giving error
-                frame = code_v1.detect_and_classify_apples(inputframe, "camera", threshold1, threshold2)
-            except:
-                return(False, f"Erro: O processamento de frames falhou.")
-    if applyfilters and filter!=None:
-        frame = ApplyFilters(frame, filter)
+        frame = code_v1.detect_and_classify_apples(inputframe, "camera", threshold1, threshold2, calibresult)  
+    except Exception as e:
+        print(e)
+        frame = inputframe
+        #return(False, f"Erro: O processamento de frames falhou.")
     return (True, frame)
 
 def ApplyFilters(imageframe, guifvalues):
-    # given an image and an HSV filter, apply the filter and return the resulting image.
-    # if a filter is not supplied, the control GUI trackbars will be used
-    # convert image to HSV
+    # Check if it's a 3-channel image (BGR)
+    # Handle different channel formats (e.g., grayscale)
+    # You might want to convert to BGR or handle differently based on your use case.
+ 
     hsv = cv2.cvtColor(imageframe, cv2.COLOR_BGR2HSV)
     # add/subtract saturation and value
     h, s, v = cv2.split(hsv)
@@ -121,6 +127,54 @@ def ApplyFilters(imageframe, guifvalues):
         img = cv2.cvtColor(output_dilated_image, cv2.COLOR_GRAY2BGR)
 
     return img
+
+# CAMERA CALIBRATION
+def calibratecamerabool(bool):
+    global calibration_inprogress
+    calibration_inprogress = bool
+def calibratecamera(frame):
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    output = MathFunctions.CalibrateCamera(gray, frame, CHESSBOARD_INTERSECTION_LINES, CHESSBOARD_INTERSECTION_COLUMNS, DRAW_CALIBRATION_LINES)
+    return output
+
+def cameracalibrationprocessor(frameoriginal):
+    if USE_CAMERA_CALIBRATION:
+        if calibration_inprogress:
+            calibresult = calibratecamera(frameoriginal)
+            if calibresult[0]:
+                update_calibdata_in_configfile(calibresult)
+                return calibresult
+        else:
+            intrinsmat = inistring_to_arrayoffloats(config.get('CALIBRATION_DATA', 'intrinsMat'))
+            distcoeffs = inistring_to_arrayoffloats(config.get('CALIBRATION_DATA', 'distcoeffs'))
+            rvecs = inistring_to_arrayoffloats(config.get('CALIBRATION_DATA', 'rvecs'))
+            tvecs = inistring_to_arrayoffloats(config.get('CALIBRATION_DATA', 'tvecs'))
+            imgoriginaxis = inistring_to_arrayoffloats(config.get('CALIBRATION_DATA', 'imgoriginaxis'))
+            imgoutercorners = inistring_to_arrayoffloats(config.get('CALIBRATION_DATA', 'imgoutercorners'))
+            return (True, frameoriginal, intrinsmat, distcoeffs, rvecs, tvecs, imgoriginaxis, imgoutercorners)
+    else:
+        return None
+    
+def update_calibdata_in_configfile(calibdata):
+    main.update_config_value('CALIBRATION_DATA', 'intrinsmat', array_to_ini_string(calibdata[2]))
+    main.update_config_value('CALIBRATION_DATA', 'distcoeffs', array_to_ini_string(calibdata[3]))
+    main.update_config_value('CALIBRATION_DATA', 'rvecs', array_to_ini_string(calibdata[4]))
+    main.update_config_value('CALIBRATION_DATA', 'tvecs', array_to_ini_string(calibdata[5]))
+    main.update_config_value('CALIBRATION_DATA', 'imgoriginaxis', array_to_ini_string(calibdata[6]))
+    main.update_config_value('CALIBRATION_DATA', 'imgoutercorners', array_to_ini_string(calibdata[7]))
+
+def array_to_ini_string(array, delimiter=','):
+    if not isinstance(array, (list, np.ndarray)):
+        raise ValueError("Input must be a list or numpy.ndarray.")
+    array_string = delimiter.join(map(str, array.ravel()))
+    return array_string
+
+def inistring_to_arrayoffloats(array_string, delimiter=',', dtype=float):
+    # Split the string by the delimiter and convert elements to the specified data type
+    elements = array_string.split(delimiter)
+    array = [dtype(element) for element in elements]
+    return np.array(array, dtype=np.float32)
+
 
 # apply adjustments to an HSV channel
 # https://stackoverflow.com/questions/49697363/shifting-hsv-pixel-values-in-python-using-numpy
