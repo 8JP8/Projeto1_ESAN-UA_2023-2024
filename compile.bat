@@ -1,0 +1,1 @@
+py ./pyinstaller.exe --noconsole --icon=ui/icons/apple.ico --add-data "modules;modules" --exclude-module "config" --add-data "config.ini;." --exclude-module "ui" --add-data "ui;ui" --noconfirm main.py

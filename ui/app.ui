@@ -1,0 +1,794 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>771</width>
+    <height>366</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>771</width>
+    <height>366</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>771</width>
+    <height>586</height>
+   </size>
+  </property>
+  <property name="font">
+   <font>
+    <stylestrategy>PreferDefault</stylestrategy>
+   </font>
+  </property>
+  <property name="windowTitle">
+   <string>Categorização de Maçãs</string>
+  </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>icons/apple.ico</normaloff>icons/apple.ico</iconset>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <widget class="QGroupBox" name="settingsgroup">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>10</y>
+      <width>641</width>
+      <height>90</height>
+     </rect>
+    </property>
+    <property name="locale">
+     <locale language="Portuguese" country="Portugal"/>
+    </property>
+    <property name="title">
+     <string>Definições</string>
+    </property>
+    <widget class="QRadioButton" name="cam1_RADIOBT">
+     <property name="geometry">
+      <rect>
+       <x>560</x>
+       <y>35</y>
+       <width>71</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>1 Câmara</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+    </widget>
+    <widget class="QRadioButton" name="cam2_RADIOBT">
+     <property name="geometry">
+      <rect>
+       <x>560</x>
+       <y>57</y>
+       <width>81</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>2 Câmaras</string>
+     </property>
+    </widget>
+    <widget class="QComboBox" name="mode_COMBOBOX">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>50</y>
+       <width>81</width>
+       <height>24</height>
+      </rect>
+     </property>
+     <property name="currentText">
+      <string>OpenCV</string>
+     </property>
+     <property name="placeholderText" stdset="0">
+      <string>OpenCV</string>
+     </property>
+     <item>
+      <property name="text">
+       <string>OpenCV</string>
+      </property>
+     </item>
+    </widget>
+    <widget class="QSlider" name="threshold1_SLIDER">
+     <property name="geometry">
+      <rect>
+       <x>379</x>
+       <y>33</y>
+       <width>151</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="maximum">
+      <number>100</number>
+     </property>
+     <property name="value">
+      <number>30</number>
+     </property>
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="invertedAppearance">
+      <bool>false</bool>
+     </property>
+     <property name="invertedControls">
+      <bool>false</bool>
+     </property>
+     <property name="tickPosition">
+      <enum>QSlider::TicksBothSides</enum>
+     </property>
+     <property name="tickInterval">
+      <number>10</number>
+     </property>
+    </widget>
+    <widget class="QSlider" name="threshold2_SLIDER">
+     <property name="geometry">
+      <rect>
+       <x>379</x>
+       <y>60</y>
+       <width>151</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="mouseTracking">
+      <bool>false</bool>
+     </property>
+     <property name="focusPolicy">
+      <enum>Qt::StrongFocus</enum>
+     </property>
+     <property name="acceptDrops">
+      <bool>false</bool>
+     </property>
+     <property name="autoFillBackground">
+      <bool>false</bool>
+     </property>
+     <property name="maximum">
+      <number>100</number>
+     </property>
+     <property name="value">
+      <number>30</number>
+     </property>
+     <property name="sliderPosition">
+      <number>30</number>
+     </property>
+     <property name="tracking">
+      <bool>true</bool>
+     </property>
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="tickPosition">
+      <enum>QSlider::TicksBothSides</enum>
+     </property>
+     <property name="tickInterval">
+      <number>10</number>
+     </property>
+    </widget>
+    <widget class="QLabel" name="thlb1">
+     <property name="geometry">
+      <rect>
+       <x>330</x>
+       <y>33</y>
+       <width>41</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="layoutDirection">
+      <enum>Qt::LeftToRight</enum>
+     </property>
+     <property name="text">
+      <string>Limite 1</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="thlb2">
+     <property name="geometry">
+      <rect>
+       <x>330</x>
+       <y>60</y>
+       <width>41</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Limite 2</string>
+     </property>
+    </widget>
+    <widget class="QComboBox" name="detectionmode_COMBOBOX">
+     <property name="geometry">
+      <rect>
+       <x>100</x>
+       <y>50</y>
+       <width>81</width>
+       <height>24</height>
+      </rect>
+     </property>
+     <property name="currentText">
+      <string>YOLO_V4</string>
+     </property>
+     <property name="placeholderText" stdset="0">
+      <string>YOLO_V4</string>
+     </property>
+     <item>
+      <property name="text">
+       <string>YOLO_V4</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>YOLO_V4 TINY</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Custom</string>
+      </property>
+     </item>
+    </widget>
+    <widget class="QLabel" name="modoslb">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>30</y>
+       <width>49</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Modo:</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="modoslb_2">
+     <property name="geometry">
+      <rect>
+       <x>100</x>
+       <y>30</y>
+       <width>51</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Deteção:</string>
+     </property>
+    </widget>
+    <widget class="QComboBox" name="detectionmode_COMBOBOX_2">
+     <property name="geometry">
+      <rect>
+       <x>601</x>
+       <y>8</y>
+       <width>40</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="currentText">
+      <string>V1</string>
+     </property>
+     <property name="placeholderText" stdset="0">
+      <string>V1</string>
+     </property>
+     <item>
+      <property name="text">
+       <string>V1</string>
+      </property>
+     </item>
+    </widget>
+    <widget class="QLabel" name="modoslb_3">
+     <property name="geometry">
+      <rect>
+       <x>190</x>
+       <y>30</y>
+       <width>91</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Categorização:</string>
+     </property>
+    </widget>
+    <widget class="QComboBox" name="categorizationmode_COMBOBOX">
+     <property name="geometry">
+      <rect>
+       <x>190</x>
+       <y>50</y>
+       <width>121</width>
+       <height>24</height>
+      </rect>
+     </property>
+     <property name="currentText">
+      <string>Tensorflow - Keras</string>
+     </property>
+     <property name="placeholderText" stdset="0">
+      <string>Tensorflow-Keras</string>
+     </property>
+     <item>
+      <property name="text">
+       <string>Tensorflow - Keras</string>
+      </property>
+     </item>
+    </widget>
+    <widget class="QPushButton" name="colorfilters_BT">
+     <property name="geometry">
+      <rect>
+       <x>560</x>
+       <y>7</y>
+       <width>30</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="icon">
+      <iconset>
+       <normaloff>icons/colour.ico</normaloff>icons/colour.ico</iconset>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QPushButton" name="upload_BT">
+    <property name="geometry">
+     <rect>
+      <x>660</x>
+      <y>16</y>
+      <width>101</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>ABRIR (A)</string>
+    </property>
+   </widget>
+   <widget class="QStackedWidget" name="stackedWidget">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>110</y>
+      <width>753</width>
+      <height>455</height>
+     </rect>
+    </property>
+    <property name="layoutDirection">
+     <enum>Qt::LeftToRight</enum>
+    </property>
+    <property name="autoFillBackground">
+     <bool>false</bool>
+    </property>
+    <property name="styleSheet">
+     <string notr="true"/>
+    </property>
+    <property name="currentIndex">
+     <number>0</number>
+    </property>
+    <widget class="QWidget" name="small_view">
+     <widget class="QGroupBox" name="input_groupbox">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>-3</y>
+        <width>368</width>
+        <height>448</height>
+       </rect>
+      </property>
+      <property name="title">
+       <string>Input</string>
+      </property>
+      <widget class="QLabel" name="inputframe_1">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>20</y>
+         <width>368</width>
+         <height>207</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">background-color: rgb(255, 255, 255);
+border: 1px solid grey;</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+      <widget class="QLabel" name="inputframe_2">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>240</y>
+         <width>368</width>
+         <height>207</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">background-color: rgb(255, 255, 255);
+border: 1px solid grey;</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </widget>
+     <widget class="QGroupBox" name="output_groupbox">
+      <property name="geometry">
+       <rect>
+        <x>383</x>
+        <y>-3</y>
+        <width>368</width>
+        <height>448</height>
+       </rect>
+      </property>
+      <property name="title">
+       <string>Output</string>
+      </property>
+      <widget class="QLabel" name="outputframe_1">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>20</y>
+         <width>368</width>
+         <height>207</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">background-color: rgb(255, 255, 255);
+border: 1px solid grey;</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+      <widget class="QLabel" name="outputframe_2">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>240</y>
+         <width>368</width>
+         <height>207</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">background-color: rgb(255, 255, 255);
+border: 1px solid grey;</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </widget>
+     <zorder>output_groupbox</zorder>
+     <zorder>input_groupbox</zorder>
+    </widget>
+    <widget class="QWidget" name="big_view">
+     <widget class="QTabWidget" name="big_view_tabwidget">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>752</width>
+        <height>444</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">border-right-color: rgba(255, 255, 255, 0);
+border-bottom-color: rgba(255, 255, 255, 0);</string>
+      </property>
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="QWidget" name="input1_tab">
+       <attribute name="title">
+        <string>Input1</string>
+       </attribute>
+       <widget class="QLabel" name="inputframe_3">
+        <property name="geometry">
+         <rect>
+          <x>-1</x>
+          <y>-1</y>
+          <width>752</width>
+          <height>423</height>
+         </rect>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">background-color: rgb(255, 255, 255);
+border: 1px solid grey;</string>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="output1_tab">
+       <attribute name="title">
+        <string>Ouput1</string>
+       </attribute>
+       <widget class="QLabel" name="outputframe_3">
+        <property name="geometry">
+         <rect>
+          <x>-1</x>
+          <y>-1</y>
+          <width>752</width>
+          <height>423</height>
+         </rect>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">background-color: rgb(255, 255, 255);
+border: 1px solid grey;</string>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="input2_tab">
+       <attribute name="title">
+        <string>Input2</string>
+       </attribute>
+       <widget class="QLabel" name="inputframe_4">
+        <property name="geometry">
+         <rect>
+          <x>-1</x>
+          <y>-1</y>
+          <width>752</width>
+          <height>423</height>
+         </rect>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">background-color: rgb(255, 255, 255);
+border: 1px solid grey;</string>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="output2_tab">
+       <attribute name="title">
+        <string>Output2</string>
+       </attribute>
+       <widget class="QLabel" name="outputframe_4">
+        <property name="geometry">
+         <rect>
+          <x>-1</x>
+          <y>-1</y>
+          <width>752</width>
+          <height>423</height>
+         </rect>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">background-color: rgb(255, 255, 255);
+border: 1px solid grey;</string>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </widget>
+     </widget>
+    </widget>
+   </widget>
+   <widget class="QProgressBar" name="progressBar">
+    <property name="geometry">
+     <rect>
+      <x>-1</x>
+      <y>0</y>
+      <width>773</width>
+      <height>5</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true"/>
+    </property>
+    <property name="maximum">
+     <number>100</number>
+    </property>
+    <property name="value">
+     <number>100</number>
+    </property>
+    <property name="textVisible">
+     <bool>false</bool>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="nextframe_BT">
+    <property name="geometry">
+     <rect>
+      <x>660</x>
+      <y>47</y>
+      <width>101</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>CONGELAR (C)</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="start_BT">
+    <property name="geometry">
+     <rect>
+      <x>660</x>
+      <y>47</y>
+      <width>101</width>
+      <height>54</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>INICIAR (I)</string>
+    </property>
+   </widget>
+   <zorder>stackedWidget</zorder>
+   <zorder>settingsgroup</zorder>
+   <zorder>upload_BT</zorder>
+   <zorder>progressBar</zorder>
+   <zorder>nextframe_BT</zorder>
+   <zorder>start_BT</zorder>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>771</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>Ficheiro</string>
+    </property>
+    <addaction name="actionOpen_Upload"/>
+    <addaction name="actionSave_Output_File"/>
+    <addaction name="actionSave_Frame"/>
+   </widget>
+   <widget class="QMenu" name="menuTools">
+    <property name="title">
+     <string>Ferramentas</string>
+    </property>
+    <widget class="QMenu" name="menu_logs">
+     <property name="title">
+      <string>Logs</string>
+     </property>
+     <property name="icon">
+      <iconset>
+       <normaloff>icons/documentediting_editdocuments_text_documentedi_2820.ico</normaloff>icons/documentediting_editdocuments_text_documentedi_2820.ico</iconset>
+     </property>
+     <addaction name="separator"/>
+     <addaction name="action_logs_open"/>
+     <addaction name="action_logs_export"/>
+    </widget>
+    <addaction name="menu_logs"/>
+    <addaction name="action_settings_open"/>
+    <addaction name="action_calibratecamera"/>
+    <addaction name="action_restartprogram"/>
+   </widget>
+   <widget class="QMenu" name="menuInfo">
+    <property name="title">
+     <string>Info</string>
+    </property>
+   </widget>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>Ver</string>
+    </property>
+    <addaction name="action_small_view"/>
+    <addaction name="action_big_view"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuView"/>
+   <addaction name="menuTools"/>
+   <addaction name="menuInfo"/>
+  </widget>
+  <action name="actionOpen_Upload">
+   <property name="icon">
+    <iconset>
+     <normaloff>icons/62917openfilefolder_109270.ico</normaloff>icons/62917openfilefolder_109270.ico</iconset>
+   </property>
+   <property name="text">
+    <string>Abrir Arquivo (Ctrl+A)</string>
+   </property>
+  </action>
+  <action name="actionSave_Output_File">
+   <property name="icon">
+    <iconset>
+     <normaloff>icons/ic_save_128_28731.ico</normaloff>icons/ic_save_128_28731.ico</iconset>
+   </property>
+   <property name="text">
+    <string>Guardar Arquivo (Ctrl+G)</string>
+   </property>
+  </action>
+  <action name="action_small_view">
+   <property name="icon">
+    <iconset>
+     <normaloff>icons/zoomout_zoom_search_find_1530.ico</normaloff>icons/zoomout_zoom_search_find_1530.ico</iconset>
+   </property>
+   <property name="text">
+    <string>Vista Pequena (Ctrl+Esquerda)</string>
+   </property>
+  </action>
+  <action name="action_big_view">
+   <property name="icon">
+    <iconset>
+     <normaloff>icons/zoomin_zoom_search_find_1531.ico</normaloff>icons/zoomin_zoom_search_find_1531.ico</iconset>
+   </property>
+   <property name="text">
+    <string>Vista Grande (Ctrl+Direita)</string>
+   </property>
+  </action>
+  <action name="action_restartprogram">
+   <property name="icon">
+    <iconset>
+     <normaloff>icons/79699_panel_restart_system_icon.ico</normaloff>icons/79699_panel_restart_system_icon.ico</iconset>
+   </property>
+   <property name="text">
+    <string>Reiniciar App (Ctrl+Shift+R)</string>
+   </property>
+  </action>
+  <action name="action_logs_open">
+   <property name="icon">
+    <iconset>
+     <normaloff>icons/documentediting_editdocuments_text_documentedi_2820.ico</normaloff>icons/documentediting_editdocuments_text_documentedi_2820.ico</iconset>
+   </property>
+   <property name="text">
+    <string>Abrir Ficheiro de Logs (Ctrl+L)</string>
+   </property>
+  </action>
+  <action name="action_logs_export">
+   <property name="icon">
+    <iconset>
+     <normaloff>icons/File_Explorer_23583.ico</normaloff>icons/File_Explorer_23583.ico</iconset>
+   </property>
+   <property name="text">
+    <string>Exportar Logs (Ctrl+Shift+L)</string>
+   </property>
+  </action>
+  <action name="actionSave_Frame">
+   <property name="icon">
+    <iconset>
+     <normaloff>icons/icons8-picture-96.ico</normaloff>icons/icons8-picture-96.ico</iconset>
+   </property>
+   <property name="text">
+    <string>Guardar Frame (Ctrl+F)</string>
+   </property>
+  </action>
+  <action name="action_calibratecamera">
+   <property name="icon">
+    <iconset>
+     <normaloff>../../../Downloads/calibrate.ico</normaloff>../../../Downloads/calibrate.ico</iconset>
+   </property>
+   <property name="text">
+    <string>Calibrar Câmara (Ctrl+Shift+C)</string>
+   </property>
+  </action>
+  <action name="action_settings_open">
+   <property name="icon">
+    <iconset>
+     <normaloff>icons/Settings-icon.ico</normaloff>icons/Settings-icon.ico</iconset>
+   </property>
+   <property name="text">
+    <string>Configuração (Ctrl+D)</string>
+   </property>
+   <property name="iconText">
+    <string>Configuração</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
