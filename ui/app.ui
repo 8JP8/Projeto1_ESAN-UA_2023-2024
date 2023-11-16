@@ -754,7 +754,7 @@ border: 1px solid grey;</string>
   <action name="action_calibratecamera">
    <property name="icon">
     <iconset>
-     <normaloff>../../../Downloads/calibrate.ico</normaloff>../../../Downloads/calibrate.ico</iconset>
+     <normaloff>icons/Paomedia-Small-N-Flat-Webcam.512.ico</normaloff>icons/Paomedia-Small-N-Flat-Webcam.512.ico</iconset>
    </property>
    <property name="text">
     <string>Calibrar Câmara (Ctrl+Shift+C)</string>
