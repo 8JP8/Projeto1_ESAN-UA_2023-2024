@@ -86,22 +86,3 @@ def UnProject(imgPoints, extMatrix, Z, sqSize):
     return positions
 
 
-'''
-# Sample values for testing
-apple_corners = np.array([
-                            [0, 0],
-                            [1, 0],
-                            [0, 1],
-                            [3, 1]
-                        ], dtype=np.float32)
-sensor_width_mm = 35.9  # Replace with your camera's sensor width
-intrinsMat = np.array([[800, 0, 320], [0, 800, 240], [0, 0, 1]], dtype=np.float32)  # Replace with actual intrinsMat
-distCoeffs = np.array([0.1, -0.2, 0.01, 0.001, 0.05], dtype=np.float32)  # Replace with actual distCoeffs
-rVecs = np.array([0.1, 0.2, -0.3], dtype=np.float32)  # Replace with actual rVecs
-tVecs = np.array([1.0, -2.0, 3.0], dtype=np.float32)  # Replace with actual tVecs
-
-# Call the function
-width_mm = calculate_apple_width_in_mm(apple_corners, sensor_width_mm, intrinsMat, distCoeffs, rVecs, tVecs)
-
-print("Width of the apple in millimeters:", width_mm)
-'''

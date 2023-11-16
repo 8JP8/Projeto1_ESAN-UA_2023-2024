@@ -1,7 +1,7 @@
-from PyQt6.QtWidgets import QApplication, QMainWindow, QMessageBox, QFileDialog, QApplication, QPushButton, QVBoxLayout, QLabel, QDialog, QWidget, QTabWidget
+from PyQt6.QtWidgets import QApplication, QMainWindow, QMessageBox, QFileDialog, QApplication, QPushButton, QVBoxLayout, QLabel, QDialog, QWidget, QTabWidget,  QVBoxLayout, QGraphicsDropShadowEffect
 from PyQt6.uic import loadUi
-from PyQt6.QtCore import pyqtSignal, Qt, QPropertyAnimation, QSize, QTimer
-from PyQt6.QtGui import QImage, QPixmap, QIcon, QCloseEvent, QAction, QKeySequence, QShortcut
+from PyQt6.QtCore import pyqtSignal, Qt, QPropertyAnimation, QSize, QTimer, QThread, QMetaObject, Q_ARG
+from PyQt6.QtGui import QImage, QPixmap, QIcon, QCloseEvent, QAction, QKeySequence, QShortcut, QPalette, QColor, QMovie, QGuiApplication
 import numpy as np
 import threading
 import subprocess
@@ -13,10 +13,6 @@ import cv2
 import configparser
 import tempfile
 
-# ============ MODULES ============
-import modules.FrameProcessor as FrameProcessor
-# ============= \\-// =============
-
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 config = configparser.ConfigParser()
@@ -24,26 +20,41 @@ config.read('config.ini')  # Replace 'config.ini' with the path to your configur
 
 #Global Variables
 calib_camera_enabled = False
+loadingcompleted = False
 
 # CONFIG GLOBAL VARIABLES
 USE_TWO_CAMERAS = config.getboolean('CAMERA_CONFIG', 'USE_TWO_CAMERAS')
 CAMERA_INDEX_LEFT = config.getint('CAMERA_CONFIG', 'CAMERA_INDEX_LEFT')    # Camera index for the left camera (if using two cameras)
 CAMERA_INDEX_RIGHT = config.getint('CAMERA_CONFIG', 'CAMERA_INDEX_RIGHT')
+DETECTIONMODE = config.get('DETECTION_CONFIG', 'DETECTIONMODE_VALUE')
+
+def imports():
+    # ============ IMPORTS ============
+    loading_splash.loading_label.setText("A Carregar: Modelos")
+    global FrameProcessor, LOG_FILE_PATH  # Make these variables global
+    import modules.FrameProcessor as FrameProcessor
+    from modules.code_v1 import LOG_FILE_PATH
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    loading_splash.loading_label.setText("A Carregar: UI")
+    # ============= \\-// =============
 
 class MyApp(QMainWindow):                     #GUI CLASS
     def __init__(self):                       # CONSTRUCTOR
         super (MyApp, self).__init__()
         loadUi('ui/app.ui', self)
         app.setWindowIcon(QIcon('ui/icons/apple.ico'))
-        self.pid = QApplication.applicationPid()
 
         # ============ INICIALIZAÇÃO COM OS VALORES DA CONFIG ============
-        self.threshold1_SLIDER.setValue(config.getint('DETECTION_CONFIG', 'threshold1_value'))
-        self.threshold2_SLIDER.setValue(config.getint('DETECTION_CONFIG', 'threshold2_value'))
         self.mode_COMBOBOX.setCurrentIndex(config.getint('DETECTION_CONFIG', 'mode_value'))
         self.detectionmode_COMBOBOX.setCurrentIndex(config.getint('DETECTION_CONFIG', 'detectionmode_value'))
         self.categorizationmode_COMBOBOX.setCurrentIndex(config.getint('DETECTION_CONFIG', 'categorizationmode_value'))
         self.cam2_RADIOBT.setChecked(config.getboolean('CAMERA_CONFIG', 'use_two_cameras'))
+        if DETECTIONMODE == (-1 or 0 or 1):
+            self.threshold1_SLIDER.setValue(config.getint('DETECTION_CONFIG', 'threshold1_value'))
+            self.threshold2_SLIDER.setValue(config.getint('DETECTION_CONFIG', 'threshold2_value'))
+        elif DETECTIONMODE == 2:
+            self.threshold1_SLIDER.setValue(config.getint('CUSTOM_DETECTION_CONFIG', 'threshold1_value'))
+            self.threshold2_SLIDER.setValue(config.getint('CUSTOM_DETECTION_CONFIG', 'threshold2_value'))
         # ============================= \\-// ============================
 
         # ============ BINDS ============
@@ -143,7 +154,12 @@ class MyApp(QMainWindow):                     #GUI CLASS
     
     def set_image(self, image): #FUNCTION TO PUT THE INPUT IMAGE IN THE FRAME
             if len(self.filename)!=0:
+                with open(LOG_FILE_PATH, 'a') as log:
+                    log.write(f"Processamento de imagem iniciado\n")
                 # ============= OLD RESIZE CODE TO FIT THE IMAGE ============ →→→→→→→→→→→→  frame = imutils.resize(image, width=self.inputframe_1.width, height=self.inputframe_1.height)
+                #Preview the input filters
+                if DETECTIONMODE == '2':
+                    image = FrameProcessor.InputFiltersVisualization(image, customdetectionfilter)
                 # ========= CALCULATIONS TO KEEP IMAGE ASPECT RATIO =========
                 width_scalei = int(self.inputframe_1.width()) / image.shape[1]
                 height_scalei = int(self.inputframe_1.height()) / image.shape[0]
@@ -168,10 +184,12 @@ class MyApp(QMainWindow):                     #GUI CLASS
                 # ======================= UPDATE THE GUI =======================
                 imagef = QImage(emptyframei, emptyframei.shape[1],emptyframei.shape[0], emptyframei.strides[0],QImage.Format.Format_RGB888)
                 imagef2 = QImage(emptyframe2i, emptyframe2i.shape[1],emptyframe2i.shape[0], emptyframe2i.strides[0],QImage.Format.Format_RGB888)
+                
                 self.inputframe_1.setPixmap(QPixmap.fromImage(imagef))
                 self.inputframe_3.setPixmap(QPixmap.fromImage(imagef2))
+                
                 # =========================== \\--// ===========================
-                if self.detectionmode_COMBOBOX.currentIndex()!=2:
+                if self.detectionmode_COMBOBOX.currentIndex() in [-1, 0, 1, 2]:
                     processedimage = FrameProcessor.ImageProcessor(self.filename, image, self.threshold1_SLIDER.value(), self.threshold2_SLIDER.value(), filter)
                     if not processedimage[0]:
                         self.show_warning(processedimage[1])
@@ -233,6 +251,8 @@ class MyApp(QMainWindow):                     #GUI CLASS
         self.stop_recording_tag = True
         self.colorfilters = ColorFilters()
         self.colorfilters.close() #close filters widget when mainwindow closes
+        self.inputfilters = InputFilters()
+        self.inputfilters.close() #close filters widget when mainwindow closes
     def video_processing_thread(self, filename):
         self.set_video(filename)
     def cameracapture_to_gui_thread(self):
@@ -252,6 +272,8 @@ class MyApp(QMainWindow):                     #GUI CLASS
             # Getting video informations for progressbar
             self.total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
             # Create a VideoCapture object
+            with open(LOG_FILE_PATH, 'a') as log:
+                log.write(f"Processamento de vídeo iniciado\n")
             while not self.thread_stop_flag:
                 ret, frame = cap.read()
                 if not ret:
@@ -263,6 +285,9 @@ class MyApp(QMainWindow):                     #GUI CLASS
                 current_frame = int(cap.get(cv2.CAP_PROP_POS_FRAMES))
                 progress = (current_frame / self.total_frames) * 100
                 self.progressBar.setValue(int(progress))
+                #Preview the input filters
+                if DETECTIONMODE == '2':
+                    frame = FrameProcessor.InputFiltersVisualization(frame, customdetectionfilter)
                 # Calculate the scale and apply resizing
                 self.hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
                 frame = cv2.cvtColor(self.hsv, cv2.COLOR_HSV2RGB)
@@ -293,7 +318,7 @@ class MyApp(QMainWindow):                     #GUI CLASS
                 self.inputframe_1.setPixmap(QPixmap.fromImage(image))
                 self.inputframe_3.setPixmap(QPixmap.fromImage(image2))
                 
-                if self.detectionmode_COMBOBOX.currentIndex()!=2:
+                if self.detectionmode_COMBOBOX.currentIndex() in [-1, 0, 1, 2]:
                     #frame processing
                     processor_result = FrameProcessor.VideoProcessor(video, processoriginalquality, self.threshold1_SLIDER.value(), self.threshold2_SLIDER.value(), filter)
                     if not processor_result[0]:
@@ -376,194 +401,210 @@ class MyApp(QMainWindow):                     #GUI CLASS
     def cameracapture_to_gui(self):
         # Create a VideoCapture object
         self.start_stop_recording("start")
+        with open(LOG_FILE_PATH, 'a') as log:
+            log.write(f"Processamento de câmara iniciado\n")
         while not self.thread_stop_flag:
-            if USE_TWO_CAMERAS:
-                self.camera=self.cap_left.read()
-                ret_left, frame_left = self.cap_left.read()
-                ret_right, frame_right = self.cap_right.read()
-                # Calculate the scale and apply resizing
-                self.hsv_left = cv2.cvtColor(frame_left, cv2.COLOR_BGR2HSV)
-                frame = cv2.cvtColor(self.hsv_left, cv2.COLOR_HSV2RGB)
-                self.hsv_right = cv2.cvtColor(frame_right, cv2.COLOR_BGR2HSV)
-                frame_right = cv2.cvtColor(self.hsv_right, cv2.COLOR_HSV2RGB)
-                if not ret_left or not ret_right:
-                    break
-            else:
-                ret, frame = self.camera.read()
-                # Calculate the scale and apply resizing
-                self.hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-                frame = cv2.cvtColor(self.hsv, cv2.COLOR_HSV2RGB)
-                if not ret:
-                    break
-            if not ret:
-                break  # Break the loop at the end of the video
-            self.videoplaying = True #bool to stop uploads while playing
-            #############################################################
-            width_scale = int(self.inputframe_1.width()) / frame.shape[1]
-            height_scale = int(self.inputframe_1.height()) / frame.shape[0]
-            scale = min(width_scale, height_scale)
-            frameoriginal = frame                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
-            frame = cv2.resize(frame, (int(frame.shape[1] * scale), int(frame.shape[0] * scale)))
-            #Calculate the scale and apply resizing 2
-            width_scale2 = int(self.inputframe_3.width()) / frameoriginal.shape[1]
-            height_scale2 = int(self.inputframe_3.height()) / frameoriginal.shape[0]
-            scale2 = min(width_scale2, height_scale2)
-            frame2 = cv2.resize(frameoriginal, (int(frameoriginal.shape[1] * scale2), int(frameoriginal.shape[0] * scale2)))
-            # Center the image
-            emptyframe = np.full((self.inputframe_1.height(), self.inputframe_1.width(), 3), (255, 255, 255), dtype=np.uint8)
-            x_offset = (self.inputframe_1.width() - frame.shape[1]) // 2
-            y_offset = (self.inputframe_1.height() - frame.shape[0]) // 2
-            # Center the image 2
-            emptyframe2 = np.full((self.inputframe_3.height(), self.inputframe_3.width(), 3), (255, 255, 255), dtype=np.uint8)
-            x_offset2 = (self.inputframe_3.width() - frame2.shape[1]) // 2
-            y_offset2 = (self.inputframe_3.height() - frame2.shape[0]) // 2
-            if USE_TWO_CAMERAS:
-                if self.detectionmode_COMBOBOX.currentIndex()!=2:
-                    frameoriginal2 = frame_right
-                    frame3 = cv2.resize(frameoriginal, (int(frameoriginal.shape[1] * scale), int(frameoriginal.shape[0] * scale)))
-                    frame4 = cv2.resize(frameoriginal2, (int(frameoriginal2.shape[1] * scale2), int(frameoriginal2.shape[0] * scale2)))
-                    #paste frames in empyframes
-                    emptyframe3 = emptyframe
-                    emptyframe4 = emptyframe2
-                    emptyframe[y_offset:y_offset + frame.shape[0], x_offset:x_offset + frame.shape[1]] = frame
-                    emptyframe2[y_offset2:y_offset2 + frame2.shape[0], x_offset2:x_offset2 + frame2.shape[1]] = frame2
-                    emptyframe3[y_offset:y_offset + frame.shape[0], x_offset:x_offset + frame.shape[1]] = frame3
-                    emptyframe4[y_offset2:y_offset2 + frame2.shape[0], x_offset2:x_offset2 + frame2.shape[1]] = frame4
-                    # Convert image format
-                    image = QImage(emptyframe, emptyframe.shape[1], emptyframe.shape[0], emptyframe.strides[0], QImage.Format.Format_RGB888)
-                    image2 = QImage(emptyframe2, emptyframe2.shape[1], emptyframe2.shape[0], emptyframe2.strides[0], QImage.Format.Format_RGB888)
-                    image3 = QImage(emptyframe3, emptyframe.shape[1], emptyframe.shape[0], emptyframe.strides[0], QImage.Format.Format_RGB888)
-                    image4 = QImage(emptyframe4, emptyframe2.shape[1], emptyframe2.shape[0], emptyframe2.strides[0], QImage.Format.Format_RGB888)
-                    # Update the GUI
-                    self.inputframe_1.setPixmap(QPixmap.fromImage(image))
-                    self.inputframe_3.setPixmap(QPixmap.fromImage(image3))
-                    self.inputframe_2.setPixmap(QPixmap.fromImage(image2))
-                    self.inputframe_4.setPixmap(QPixmap.fromImage(image4))
-                    # Frame processing
-                    processor_result = FrameProcessor.CameraProcessor(self, frameoriginal, self.threshold1_SLIDER.value(), self.threshold2_SLIDER.value(), filter)
-                    processor_result2 = FrameProcessor.CameraProcessor(self, frameoriginal2, self.threshold1_SLIDER.value(), self.threshold2_SLIDER.value(), filter)
-                    if not processor_result[0] or not processor_result2[0]:
-                        self.show_warning(processor_result[1])
-                    else:
-                        imagewithfilters = FrameProcessor.ApplyFilters(processor_result[1], filter)
-                        imagewithfilters2 = FrameProcessor.ApplyFilters(processor_result2[1], filter)
-                        # Ensure that processedvideoframe has the same dimensions as the target area
-                        processedvideoframe = cv2.resize(imagewithfilters, (frame.shape[1], frame.shape[0]))
-                        processedvideoframe2 = cv2.resize(imagewithfilters, (frame2.shape[1], frame2.shape[0]))
-                        processedvideoframe3 = cv2.resize(imagewithfilters2, (frame.shape[1], frame.shape[0]))
-                        processedvideoframe4 = cv2.resize(imagewithfilters2, (frame2.shape[1], frame2.shape[0]))
-                        # Create an empty frame with the target dimensions
-                        emptyframep3, emptyframep = np.full((self.outputframe_1.height(), self.outputframe_1.width(), 3), (255, 255, 255), dtype=np.uint8)
-                        emptyframep4, emptyframep2 = np.full((self.outputframe_3.height(), self.outputframe_3.width(), 3), (255, 255, 255), dtype=np.uint8)
-                        # Paste the resized frame onto the target area in emptyframep
-                        emptyframep[y_offset:y_offset + frame.shape[0], x_offset:x_offset + frame.shape[1]] = processedvideoframe
-                        emptyframep2[y_offset2:y_offset2 + frame2.shape[0], x_offset2:x_offset2 + frame2.shape[1]] = processedvideoframe2
-                        emptyframep3[y_offset:y_offset + frame.shape[0], x_offset:x_offset + frame.shape[1]] = processedvideoframe3
-                        emptyframep4[y_offset2:y_offset2 + frame2.shape[0], x_offset2:x_offset2 + frame2.shape[1]] = processedvideoframe4
-                        # Convert image format
-                        videoframep = QImage(emptyframep, emptyframep.shape[1], emptyframep.shape[0], emptyframep.strides[0], QImage.Format.Format_RGB888)
-                        videoframep2 = QImage(emptyframep2, emptyframep2.shape[1], emptyframep2.shape[0], emptyframep2.strides[0], QImage.Format.Format_RGB888)
-                        videoframep3 = QImage(emptyframep3, emptyframep.shape[1], emptyframep.shape[0], emptyframep.strides[0], QImage.Format.Format_RGB888)
-                        videoframep4 = QImage(emptyframep4, emptyframep2.shape[1], emptyframep2.shape[0], emptyframep2.strides[0], QImage.Format.Format_RGB888)
-                        # Update the GUI
-                        if self.showframescontinuously or self.nextframebool:
-                            self.outputframe_1.setPixmap(QPixmap.fromImage(videoframep))
-                            self.outputframe_3.setPixmap(QPixmap.fromImage(videoframep3))
-                            self.outputframe_2.setPixmap(QPixmap.fromImage(videoframep2))
-                            self.outputframe_4.setPixmap(QPixmap.fromImage(videoframep4))
-                            self.currentframesaver(processor_result[1])  #Save latest frame in a variable
-                            self.currentframesaver2(processor_result2[1])  #Save latest frame in a variable
-                            self.nextframebool = False                        
+                if USE_TWO_CAMERAS:
+                    try:
+                        self.camera = self.cap_left
+                        ret_left, frame_left = self.cap_left.read()
+                        ret_right, frame_right = self.cap_right.read()
+                    except:
+                        self.show_warning("Erro: Câmara não disponível.")
+                    #Preview the input filters
+                    if DETECTIONMODE == '2':
+                        frame_left = FrameProcessor.InputFiltersVisualization(frame_left, customdetectionfilter)
+                        frame_right = FrameProcessor.InputFiltersVisualization(frame_right, customdetectionfilter)
+                    # Calculate the scale and apply resizing
+                    self.hsv_left = cv2.cvtColor(frame_left, cv2.COLOR_BGR2HSV)
+                    frame = cv2.cvtColor(self.hsv_left, cv2.COLOR_HSV2RGB)
+                    self.hsv_right = cv2.cvtColor(frame_right, cv2.COLOR_BGR2HSV)
+                    frame_right = cv2.cvtColor(self.hsv_right, cv2.COLOR_HSV2RGB)
+                    if not ret_left or not ret_right:
+                        break
                 else:
-                    calibframereturn = FrameProcessor.cameracalibrationprocessor(frameoriginal)
-                    if calibframereturn != None:
-                        inputframe = calibframereturn[1]
-                    else:
-                        inputframe = frameoriginal
-                    imagewithfilters = FrameProcessor.ApplyFilters(inputframe, filter)
-                    imagewithfilters2 = FrameProcessor.ApplyFilters(frameoriginal2, filter)
-                    framepf = cv2.resize(imagewithfilters, (frame.shape[1], frame.shape[0]))
-                    framep2f = cv2.resize(imagewithfilters, (frame2.shape[1], frame2.shape[0]))
-                    framep3f = cv2.resize(imagewithfilters2, (frame.shape[1], frame.shape[0]))
-                    framep4f = cv2.resize(imagewithfilters2, (frame2.shape[1], frame2.shape[0]))
-                    emptyframepf = np.full((self.outputframe_1.height(), self.outputframe_1.width(), 3), (255, 255, 255), dtype=np.uint8) # Create an empty frame with the frame dimensions
-                    emptyframepf[y_offset:y_offset+frame.shape[0], x_offset:x_offset+frame.shape[1]] = framepf                      # Paste the resized image onto the empty frame
-                    emptyframep2f = np.full((self.outputframe_3.height(), self.outputframe_3.width(), 3), (255, 255, 255), dtype=np.uint8)  # Create an empty frame with the frame dimensions
-                    emptyframep2f[y_offset2:y_offset2+frame2.shape[0], x_offset2:x_offset2+frame2.shape[1]] = framep2f                # Paste the resized image onto the empty frame
-                    emptyframep3f = np.full((self.outputframe_1.height(), self.outputframe_1.width(), 3), (255, 255, 255), dtype=np.uint8) # Create an empty frame with the frame dimensions
-                    emptyframep3f[y_offset:y_offset+frame.shape[0], x_offset:x_offset+frame.shape[1]] = framep3f                      # Paste the resized image onto the empty frame
-                    emptyframep4f = np.full((self.outputframe_3.height(), self.outputframe_3.width(), 3), (255, 255, 255), dtype=np.uint8)  # Create an empty frame with the frame dimensions
-                    emptyframep4f[y_offset2:y_offset2+frame2.shape[0], x_offset2:x_offset2+frame2.shape[1]] = framep4f                # Paste the resized image onto the empty frame
-                    # Paste the resized image onto the empty frame
-                    # ======================== UPDATE THE GUI ========================
-                    videoframepf = QImage(emptyframepf, emptyframepf.shape[1], emptyframepf.shape[0], emptyframepf.strides[0], QImage.Format.Format_RGB888)
-                    videoframep2f = QImage(emptyframep2f, emptyframep2f.shape[1], emptyframep2f.shape[0], emptyframep2f.strides[0], QImage.Format.Format_RGB888)
-                    videoframep3f = QImage(emptyframep3f, emptyframepf.shape[1], emptyframepf.shape[0], emptyframepf.strides[0], QImage.Format.Format_RGB888)
-                    videoframep4f = QImage(emptyframep4f, emptyframep2f.shape[1], emptyframep2f.shape[0], emptyframep2f.strides[0], QImage.Format.Format_RGB888)
-                    if self.showframescontinuously or self.nextframebool:
-                        self.outputframe_1.setPixmap(QPixmap.fromImage(videoframepf))
-                        self.outputframe_3.setPixmap(QPixmap.fromImage(videoframep3f))
-                        self.outputframe_2.setPixmap(QPixmap.fromImage(videoframep2f))
-                        self.outputframe_4.setPixmap(QPixmap.fromImage(videoframep4f))
-                        self.currentframesaver(imagewithfilters)  #Save latest frame in a variable
-                        self.currentframesaver(imagewithfilters2)  #Save latest frame in a variable
-                        self.nextframebool = False
-            else:
-                emptyframe[y_offset:y_offset + frame.shape[0], x_offset:x_offset + frame.shape[1]] = frame
-                emptyframe2[y_offset2:y_offset2 + frame2.shape[0], x_offset2:x_offset2 + frame2.shape[1]] = frame2
-                image = QImage(emptyframe, emptyframe.shape[1], emptyframe.shape[0], emptyframe.strides[0], QImage.Format.Format_RGB888)
-                image2 = QImage(emptyframe2, emptyframe2.shape[1], emptyframe2.shape[0], emptyframe2.strides[0], QImage.Format.Format_RGB888)
-                self.inputframe_1.setPixmap(QPixmap.fromImage(image))
-                self.inputframe_3.setPixmap(QPixmap.fromImage(image2))
-                
-                if self.detectionmode_COMBOBOX.currentIndex()!=2:
-                    processor_result = FrameProcessor.CameraProcessor(self, frameoriginal, self.threshold1_SLIDER.value(), self.threshold2_SLIDER.value(), filter)
-
-                    if not processor_result[0]:
-                        self.show_warning(processor_result[1])
-                    else:
-                        imagewithfilters = FrameProcessor.ApplyFilters(processor_result[1], filter)
-                        # Ensure that processedvideoframe has the same dimensions as the target area
-                        processedvideoframe = cv2.resize(imagewithfilters, (frame.shape[1], frame.shape[0]))
-                        processedvideoframe2 = cv2.resize(imagewithfilters, (frame2.shape[1], frame2.shape[0]))
-                        # Create an empty frame with the target dimensions
-                        emptyframep = np.full((self.outputframe_1.height(), self.outputframe_1.width(), 3), (255, 255, 255), dtype=np.uint8)
-                        emptyframep2 = np.full((self.outputframe_3.height(), self.outputframe_3.width(), 3), (255, 255, 255), dtype=np.uint8)
-                        # Paste the resized frame onto the target area in emptyframep
-                        emptyframep[y_offset:y_offset + frame.shape[0], x_offset:x_offset + frame.shape[1]] = processedvideoframe
-                        emptyframep2[y_offset2:y_offset2 + frame2.shape[0], x_offset2:x_offset2 + frame2.shape[1]] = processedvideoframe2
+                    try:
+                        ret, frame = self.camera.read()
+                    except:
+                        self.show_warning("Erro: Câmara não disponível.")
+                    #Preview the input filters
+                    if DETECTIONMODE == '2':
+                        frame = FrameProcessor.InputFiltersVisualization(frame, customdetectionfilter)
+                    # Calculate the scale and apply resizing
+                    self.hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+                    frame = cv2.cvtColor(self.hsv, cv2.COLOR_HSV2RGB)
+                    if not ret:
+                        break
+                if not ret:
+                    break  # Break the loop at the end of the video
+                self.videoplaying = True #bool to stop uploads while playing
+                #############################################################
+                width_scale = int(self.inputframe_1.width()) / frame.shape[1]
+                height_scale = int(self.inputframe_1.height()) / frame.shape[0]
+                scale = min(width_scale, height_scale)
+                frameoriginal = frame                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
+                frame = cv2.resize(frame, (int(frame.shape[1] * scale), int(frame.shape[0] * scale)))
+                #Calculate the scale and apply resizing 2
+                width_scale2 = int(self.inputframe_3.width()) / frameoriginal.shape[1]
+                height_scale2 = int(self.inputframe_3.height()) / frameoriginal.shape[0]
+                scale2 = min(width_scale2, height_scale2)
+                frame2 = cv2.resize(frameoriginal, (int(frameoriginal.shape[1] * scale2), int(frameoriginal.shape[0] * scale2)))
+                # Center the image
+                emptyframe = np.full((self.inputframe_1.height(), self.inputframe_1.width(), 3), (255, 255, 255), dtype=np.uint8)
+                x_offset = (self.inputframe_1.width() - frame.shape[1]) // 2
+                y_offset = (self.inputframe_1.height() - frame.shape[0]) // 2
+                # Center the image 2
+                emptyframe2 = np.full((self.inputframe_3.height(), self.inputframe_3.width(), 3), (255, 255, 255), dtype=np.uint8)
+                x_offset2 = (self.inputframe_3.width() - frame2.shape[1]) // 2
+                y_offset2 = (self.inputframe_3.height() - frame2.shape[0]) // 2
+                if USE_TWO_CAMERAS:
+                    if self.detectionmode_COMBOBOX.currentIndex() in [-1, 0, 1, 2]:
+                        frameoriginal2 = frame_right
+                        frame3 = cv2.resize(frameoriginal, (int(frameoriginal.shape[1] * scale), int(frameoriginal.shape[0] * scale)))
+                        frame4 = cv2.resize(frameoriginal2, (int(frameoriginal2.shape[1] * scale2), int(frameoriginal2.shape[0] * scale2)))
+                        #paste frames in empyframes
+                        emptyframe3 = emptyframe
+                        emptyframe4 = emptyframe2
+                        emptyframe[y_offset:y_offset + frame.shape[0], x_offset:x_offset + frame.shape[1]] = frame
+                        emptyframe2[y_offset2:y_offset2 + frame2.shape[0], x_offset2:x_offset2 + frame2.shape[1]] = frame2
+                        emptyframe3[y_offset:y_offset + frame.shape[0], x_offset:x_offset + frame.shape[1]] = frame3
+                        emptyframe4[y_offset2:y_offset2 + frame2.shape[0], x_offset2:x_offset2 + frame2.shape[1]] = frame4
                         # Convert image format
-                        videoframep = QImage(emptyframep, emptyframep.shape[1], emptyframep.shape[0], emptyframep.strides[0], QImage.Format.Format_RGB888)
-                        videoframep2 = QImage(emptyframep2, emptyframep2.shape[1], emptyframep2.shape[0], emptyframep2.strides[0], QImage.Format.Format_RGB888)
+                        image = QImage(emptyframe, emptyframe.shape[1], emptyframe.shape[0], emptyframe.strides[0], QImage.Format.Format_RGB888)
+                        image2 = QImage(emptyframe2, emptyframe2.shape[1], emptyframe2.shape[0], emptyframe2.strides[0], QImage.Format.Format_RGB888)
+                        image3 = QImage(emptyframe3, emptyframe.shape[1], emptyframe.shape[0], emptyframe.strides[0], QImage.Format.Format_RGB888)
+                        image4 = QImage(emptyframe4, emptyframe2.shape[1], emptyframe2.shape[0], emptyframe2.strides[0], QImage.Format.Format_RGB888)
                         # Update the GUI
+                        self.inputframe_1.setPixmap(QPixmap.fromImage(image))
+                        self.inputframe_3.setPixmap(QPixmap.fromImage(image3))
+                        self.inputframe_2.setPixmap(QPixmap.fromImage(image2))
+                        self.inputframe_4.setPixmap(QPixmap.fromImage(image4))
+                        # Frame processing
+                        processor_result = FrameProcessor.CameraProcessor(self, frameoriginal, self.threshold1_SLIDER.value(), self.threshold2_SLIDER.value(), filter)
+                        processor_result2 = FrameProcessor.CameraProcessor(self, frameoriginal2, self.threshold1_SLIDER.value(), self.threshold2_SLIDER.value(), filter)
+                        if not processor_result[0] or not processor_result2[0]:
+                            self.show_warning(processor_result[1])
+                        else:
+                            imagewithfilters = FrameProcessor.ApplyFilters(processor_result[1], filter)
+                            imagewithfilters2 = FrameProcessor.ApplyFilters(processor_result2[1], filter)
+                            # Ensure that processedvideoframe has the same dimensions as the target area
+                            processedvideoframe = cv2.resize(imagewithfilters, (frame.shape[1], frame.shape[0]))
+                            processedvideoframe2 = cv2.resize(imagewithfilters, (frame2.shape[1], frame2.shape[0]))
+                            processedvideoframe3 = cv2.resize(imagewithfilters2, (frame.shape[1], frame.shape[0]))
+                            processedvideoframe4 = cv2.resize(imagewithfilters2, (frame2.shape[1], frame2.shape[0]))
+                            # Create an empty frame with the target dimensions
+                            emptyframep3, emptyframep = np.full((self.outputframe_1.height(), self.outputframe_1.width(), 3), (255, 255, 255), dtype=np.uint8)
+                            emptyframep4, emptyframep2 = np.full((self.outputframe_3.height(), self.outputframe_3.width(), 3), (255, 255, 255), dtype=np.uint8)
+                            # Paste the resized frame onto the target area in emptyframep
+                            emptyframep[y_offset:y_offset + frame.shape[0], x_offset:x_offset + frame.shape[1]] = processedvideoframe
+                            emptyframep2[y_offset2:y_offset2 + frame2.shape[0], x_offset2:x_offset2 + frame2.shape[1]] = processedvideoframe2
+                            emptyframep3[y_offset:y_offset + frame.shape[0], x_offset:x_offset + frame.shape[1]] = processedvideoframe3
+                            emptyframep4[y_offset2:y_offset2 + frame2.shape[0], x_offset2:x_offset2 + frame2.shape[1]] = processedvideoframe4
+                            # Convert image format
+                            videoframep = QImage(emptyframep, emptyframep.shape[1], emptyframep.shape[0], emptyframep.strides[0], QImage.Format.Format_RGB888)
+                            videoframep2 = QImage(emptyframep2, emptyframep2.shape[1], emptyframep2.shape[0], emptyframep2.strides[0], QImage.Format.Format_RGB888)
+                            videoframep3 = QImage(emptyframep3, emptyframep.shape[1], emptyframep.shape[0], emptyframep.strides[0], QImage.Format.Format_RGB888)
+                            videoframep4 = QImage(emptyframep4, emptyframep2.shape[1], emptyframep2.shape[0], emptyframep2.strides[0], QImage.Format.Format_RGB888)
+                            # Update the GUI
+                            if self.showframescontinuously or self.nextframebool:
+                                self.outputframe_1.setPixmap(QPixmap.fromImage(videoframep))
+                                self.outputframe_3.setPixmap(QPixmap.fromImage(videoframep3))
+                                self.outputframe_2.setPixmap(QPixmap.fromImage(videoframep2))
+                                self.outputframe_4.setPixmap(QPixmap.fromImage(videoframep4))
+                                self.currentframesaver(processor_result[1])  #Save latest frame in a variable
+                                self.currentframesaver2(processor_result2[1])  #Save latest frame in a variable
+                                self.nextframebool = False                        
+                    else:
+                        calibframereturn = FrameProcessor.cameracalibrationprocessor(frameoriginal)
+                        if calibframereturn != None:
+                            inputframe = calibframereturn[1]
+                        else:
+                            inputframe = frameoriginal
+                        imagewithfilters = FrameProcessor.ApplyFilters(inputframe, filter)
+                        imagewithfilters2 = FrameProcessor.ApplyFilters(frameoriginal2, filter)
+                        framepf = cv2.resize(imagewithfilters, (frame.shape[1], frame.shape[0]))
+                        framep2f = cv2.resize(imagewithfilters, (frame2.shape[1], frame2.shape[0]))
+                        framep3f = cv2.resize(imagewithfilters2, (frame.shape[1], frame.shape[0]))
+                        framep4f = cv2.resize(imagewithfilters2, (frame2.shape[1], frame2.shape[0]))
+                        emptyframepf = np.full((self.outputframe_1.height(), self.outputframe_1.width(), 3), (255, 255, 255), dtype=np.uint8) # Create an empty frame with the frame dimensions
+                        emptyframepf[y_offset:y_offset+frame.shape[0], x_offset:x_offset+frame.shape[1]] = framepf                      # Paste the resized image onto the empty frame
+                        emptyframep2f = np.full((self.outputframe_3.height(), self.outputframe_3.width(), 3), (255, 255, 255), dtype=np.uint8)  # Create an empty frame with the frame dimensions
+                        emptyframep2f[y_offset2:y_offset2+frame2.shape[0], x_offset2:x_offset2+frame2.shape[1]] = framep2f                # Paste the resized image onto the empty frame
+                        emptyframep3f = np.full((self.outputframe_1.height(), self.outputframe_1.width(), 3), (255, 255, 255), dtype=np.uint8) # Create an empty frame with the frame dimensions
+                        emptyframep3f[y_offset:y_offset+frame.shape[0], x_offset:x_offset+frame.shape[1]] = framep3f                      # Paste the resized image onto the empty frame
+                        emptyframep4f = np.full((self.outputframe_3.height(), self.outputframe_3.width(), 3), (255, 255, 255), dtype=np.uint8)  # Create an empty frame with the frame dimensions
+                        emptyframep4f[y_offset2:y_offset2+frame2.shape[0], x_offset2:x_offset2+frame2.shape[1]] = framep4f                # Paste the resized image onto the empty frame
+                        # Paste the resized image onto the empty frame
+                        # ======================== UPDATE THE GUI ========================
+                        videoframepf = QImage(emptyframepf, emptyframepf.shape[1], emptyframepf.shape[0], emptyframepf.strides[0], QImage.Format.Format_RGB888)
+                        videoframep2f = QImage(emptyframep2f, emptyframep2f.shape[1], emptyframep2f.shape[0], emptyframep2f.strides[0], QImage.Format.Format_RGB888)
+                        videoframep3f = QImage(emptyframep3f, emptyframepf.shape[1], emptyframepf.shape[0], emptyframepf.strides[0], QImage.Format.Format_RGB888)
+                        videoframep4f = QImage(emptyframep4f, emptyframep2f.shape[1], emptyframep2f.shape[0], emptyframep2f.strides[0], QImage.Format.Format_RGB888)
                         if self.showframescontinuously or self.nextframebool:
-                            self.outputframe_1.setPixmap(QPixmap.fromImage(videoframep))
-                            self.outputframe_3.setPixmap(QPixmap.fromImage(videoframep2))
-                            self.currentframesaver(processor_result[1])  #Save latest frame in a variable
+                            self.outputframe_1.setPixmap(QPixmap.fromImage(videoframepf))
+                            self.outputframe_3.setPixmap(QPixmap.fromImage(videoframep3f))
+                            self.outputframe_2.setPixmap(QPixmap.fromImage(videoframep2f))
+                            self.outputframe_4.setPixmap(QPixmap.fromImage(videoframep4f))
+                            self.currentframesaver(imagewithfilters)  #Save latest frame in a variable
+                            self.currentframesaver(imagewithfilters2)  #Save latest frame in a variable
                             self.nextframebool = False
                 else:
-                    calibframereturn = FrameProcessor.cameracalibrationprocessor(frameoriginal)
-                    if calibframereturn != None:
-                        inputframe = calibframereturn[1]
+                    emptyframe[y_offset:y_offset + frame.shape[0], x_offset:x_offset + frame.shape[1]] = frame
+                    emptyframe2[y_offset2:y_offset2 + frame2.shape[0], x_offset2:x_offset2 + frame2.shape[1]] = frame2
+                    image = QImage(emptyframe, emptyframe.shape[1], emptyframe.shape[0], emptyframe.strides[0], QImage.Format.Format_RGB888)
+                    image2 = QImage(emptyframe2, emptyframe2.shape[1], emptyframe2.shape[0], emptyframe2.strides[0], QImage.Format.Format_RGB888)
+
+                    self.inputframe_1.setPixmap(QPixmap.fromImage(image))
+                    self.inputframe_3.setPixmap(QPixmap.fromImage(image2))
+                    
+                    if self.detectionmode_COMBOBOX.currentIndex() in [-1, 0, 1, 2]:
+                        processor_result = FrameProcessor.CameraProcessor(self, frameoriginal, self.threshold1_SLIDER.value(), self.threshold2_SLIDER.value(), filter)
+
+                        if not processor_result[0]:
+                            self.show_warning(processor_result[1])
+                        else:
+                            imagewithfilters = FrameProcessor.ApplyFilters(processor_result[1], filter)
+                            # Ensure that processedvideoframe has the same dimensions as the target area
+                            processedvideoframe = cv2.resize(imagewithfilters, (frame.shape[1], frame.shape[0]))
+                            processedvideoframe2 = cv2.resize(imagewithfilters, (frame2.shape[1], frame2.shape[0]))
+                            # Create an empty frame with the target dimensions
+                            emptyframep = np.full((self.outputframe_1.height(), self.outputframe_1.width(), 3), (255, 255, 255), dtype=np.uint8)
+                            emptyframep2 = np.full((self.outputframe_3.height(), self.outputframe_3.width(), 3), (255, 255, 255), dtype=np.uint8)
+                            # Paste the resized frame onto the target area in emptyframep
+                            emptyframep[y_offset:y_offset + frame.shape[0], x_offset:x_offset + frame.shape[1]] = processedvideoframe
+                            emptyframep2[y_offset2:y_offset2 + frame2.shape[0], x_offset2:x_offset2 + frame2.shape[1]] = processedvideoframe2
+                            # Convert image format
+                            videoframep = QImage(emptyframep, emptyframep.shape[1], emptyframep.shape[0], emptyframep.strides[0], QImage.Format.Format_RGB888)
+                            videoframep2 = QImage(emptyframep2, emptyframep2.shape[1], emptyframep2.shape[0], emptyframep2.strides[0], QImage.Format.Format_RGB888)
+                            # Update the GUI
+                            if self.showframescontinuously or self.nextframebool:
+                                self.outputframe_1.setPixmap(QPixmap.fromImage(videoframep))
+                                self.outputframe_3.setPixmap(QPixmap.fromImage(videoframep2))
+                                self.currentframesaver(processor_result[1])  #Save latest frame in a variable
+                                self.nextframebool = False
                     else:
-                        inputframe = frameoriginal
-                    # Update the GUI
-                    imagewithfilters = FrameProcessor.ApplyFilters(inputframe, filter)
-                    framepf = cv2.resize(imagewithfilters, (frame.shape[1], frame.shape[0]))
-                    framep2f = cv2.resize(imagewithfilters, (frame2.shape[1], frame2.shape[0]))
-                    emptyframepf = np.full((self.outputframe_1.height(), self.outputframe_1.width(), 3), (255, 255, 255), dtype=np.uint8) # Create an empty frame with the frame dimensions
-                    emptyframepf[y_offset:y_offset+frame.shape[0], x_offset:x_offset+frame.shape[1]] = framepf                      # Paste the resized image onto the empty frame
-                    emptyframep2f = np.full((self.outputframe_3.height(), self.outputframe_3.width(), 3), (255, 255, 255), dtype=np.uint8)  # Create an empty frame with the frame dimensions
-                    emptyframep2f[y_offset2:y_offset2+frame2.shape[0], x_offset2:x_offset2+frame2.shape[1]] = framep2f                # Paste the resized image onto the empty frame
-                    # Paste the resized image onto the empty frame
-                    # ======================== UPDATE THE GUI ========================
-                    imagepf = QImage(emptyframepf, emptyframepf.shape[1],emptyframepf.shape[0], emptyframepf.strides[0],QImage.Format.Format_RGB888)
-                    imagep2f = QImage(emptyframep2f, emptyframep2f.shape[1],emptyframep2f.shape[0], emptyframep2f.strides[0],QImage.Format.Format_RGB888)
-                    if self.showframescontinuously or self.nextframebool:
-                        self.outputframe_1.setPixmap(QPixmap.fromImage(imagepf))
-                        self.outputframe_3.setPixmap(QPixmap.fromImage(imagep2f))
-                        self.currentframesaver(imagewithfilters)   #Save latest frame in a variable
-                        self.nextframebool = False
+                        calibframereturn = FrameProcessor.cameracalibrationprocessor(frameoriginal)
+                        if calibframereturn != None:
+                            inputframe = calibframereturn[1]
+                        else:
+                            inputframe = frameoriginal
+                        # Update the GUI
+                        imagewithfilters = FrameProcessor.ApplyFilters(inputframe, filter)
+                        framepf = cv2.resize(imagewithfilters, (frame.shape[1], frame.shape[0]))
+                        framep2f = cv2.resize(imagewithfilters, (frame2.shape[1], frame2.shape[0]))
+                        emptyframepf = np.full((self.outputframe_1.height(), self.outputframe_1.width(), 3), (255, 255, 255), dtype=np.uint8) # Create an empty frame with the frame dimensions
+                        emptyframepf[y_offset:y_offset+frame.shape[0], x_offset:x_offset+frame.shape[1]] = framepf                      # Paste the resized image onto the empty frame
+                        emptyframep2f = np.full((self.outputframe_3.height(), self.outputframe_3.width(), 3), (255, 255, 255), dtype=np.uint8)  # Create an empty frame with the frame dimensions
+                        emptyframep2f[y_offset2:y_offset2+frame2.shape[0], x_offset2:x_offset2+frame2.shape[1]] = framep2f                # Paste the resized image onto the empty frame
+                        # Paste the resized image onto the empty frame
+                        # ======================== UPDATE THE GUI ========================
+                        imagepf = QImage(emptyframepf, emptyframepf.shape[1],emptyframepf.shape[0], emptyframepf.strides[0],QImage.Format.Format_RGB888)
+                        imagep2f = QImage(emptyframep2f, emptyframep2f.shape[1],emptyframep2f.shape[0], emptyframep2f.strides[0],QImage.Format.Format_RGB888)
+                        if self.showframescontinuously or self.nextframebool:
+                            self.outputframe_1.setPixmap(QPixmap.fromImage(imagepf))
+                            self.outputframe_3.setPixmap(QPixmap.fromImage(imagep2f))
+                            self.currentframesaver(imagewithfilters)   #Save latest frame in a variable
+                            self.nextframebool = False
 
         self.modify_startbutton("iniciar")
         self.videoplaying = False
@@ -770,14 +811,21 @@ class MyApp(QMainWindow):                     #GUI CLASS
     def colorfilters_open(self):    
         self.colorfilters = ColorFilters()
         self.colorfilters.show()
+        if self.detectionmode_COMBOBOX.currentIndex() == 2:
+            self.inputfilters = InputFilters()
+            self.inputfilters.show()
 
     def info_open(self):    
         info_dialog = AboutDialog()
         info_dialog.exec()
     
     def update_config(self):
-        config.set('DETECTION_CONFIG', 'threshold1_value', str(self.threshold1_SLIDER.value()))
-        config.set('DETECTION_CONFIG', 'threshold2_value', str(self.threshold2_SLIDER.value()))
+        if config.getint('DETECTION_CONFIG', 'detectionmode_value') == (-1 or 0 or 1):
+            config.set('DETECTION_CONFIG', 'threshold1_value', str(self.threshold1_SLIDER.value()))
+            config.set('DETECTION_CONFIG', 'threshold2_value', str(self.threshold2_SLIDER.value()))
+        elif config.getint('DETECTION_CONFIG', 'detectionmode_value') == 2:
+            config.set('CUSTOM_DETECTION_CONFIG', 'threshold1_value', str(self.threshold1_SLIDER.value()))
+            config.set('CUSTOM_DETECTION_CONFIG', 'threshold2_value', str(self.threshold2_SLIDER.value()))
         config.set('DETECTION_CONFIG', 'mode_value', str(self.mode_COMBOBOX.currentIndex()))
         config.set('DETECTION_CONFIG', 'detectionmode_value', str(self.detectionmode_COMBOBOX.currentIndex()))
         config.set('DETECTION_CONFIG', 'categorizationmode_value', str(self.categorizationmode_COMBOBOX.currentIndex()))
@@ -849,6 +897,13 @@ class ColorFilters(QWidget):
         super().__init__()
         # Load the widget UI file
         loadUi('ui/filters.ui', self)
+        
+        screen_center = QGuiApplication.primaryScreen().availableGeometry().center()
+        self.move(int(screen_center.x() + 796 / 2), int(screen_center.y() - self.height() / 2))
+
+        if DETECTIONMODE == '2':
+            self.title_lb.setText('<html><head/><body><p><span style=" font-weight:600;">Filtros de Saída</span> [Tempo Real]</p></body></html>')
+            self.setWindowTitle("Controlo de Filtros [Saída]")
 
         #Initialize the Values from the Config File
         self.minhue_slider.setValue(config.getint('FILTER_CONFIG','min_hue'))
@@ -982,7 +1037,7 @@ class ColorFilters(QWidget):
         if (self.blurkernelsize_spinbox.value()%2)==0: #check if is pair
             self.blurkernelsize_spinbox.setValue(self.blurkernelsize_spinbox.value()+1) #if pair add 1
         self.blurkernelsize_slider.setValue(self.blurkernelsize_spinbox.value()) #set slider value
-        if (self.sobel_radiobt.isChecked() or self.laplace_radiobt.isChecked()) and ((self.kernelsize_spinbox.value()%2)==0): #if sobel o laplace make the values odd too
+        if (self.sobel_radiobt.isChecked() or self.laplace_radiobt.isChecked()) and ((self.kernelsize_spinbox.value()%2)==0): #if sobel or laplace make the values odd too
             self.kernelsize_spinbox.setValue(self.kernelsize_spinbox.value()+1) #if pair add 1
         self.kernelsize_slider.setValue(self.kernelsize_spinbox.value()) #set slider value
 
@@ -990,7 +1045,7 @@ class ColorFilters(QWidget):
         if (self.blurkernelsize_slider.value()%2)==0: #check if is pair
             self.blurkernelsize_slider.setValue(self.blurkernelsize_slider.value()+1) #if pair add 1
         self.blurkernelsize_spinbox.setValue(self.blurkernelsize_slider.value()) #set spinbox value
-        if (self.sobel_radiobt.isChecked() or self.laplace_radiobt.isChecked()) and ((self.kernelsize_slider.value()%2)==0): #if sobel o laplace make the values odd too
+        if (self.sobel_radiobt.isChecked() or self.laplace_radiobt.isChecked()) and ((self.kernelsize_slider.value()%2)==0): #if sobel or laplace make the values odd too
             self.kernelsize_slider.setValue(self.kernelsize_slider.value()+1) #if pair add 1
         self.kernelsize_spinbox.setValue(self.kernelsize_slider.value()) #set spinbox value
 
@@ -1145,16 +1200,213 @@ class ColorFilters(QWidget):
         self.cannyerode_slider.setValue(1)
         self.cannydilate_slider.setValue(1)
         self.canny1_slider.setValue(0)
-        self.canny2_slider.setValue(0)
+        self.canny2_slider.setValue(255)
         self.canny_radiobt.setChecked(False)
         self.sobel_radiobt.setChecked(False)
         self.laplace_radiobt.setChecked(False)
-        self.output_erode_slider.setValue(0)
-        self.output_dilate_slider.setValue(0)
+        self.output_erode_slider.setValue(1)
+        self.output_dilate_slider.setValue(1)
         self.spinboxupdate()
     
     def close_widget(self):
         self.close()
+
+class InputFilters(QWidget):
+    def __init__(self):
+        super().__init__()
+        # Load the widget UI file
+        loadUi('ui/filters_input.ui', self)
+
+        screen_center = QGuiApplication.primaryScreen().availableGeometry().center()
+        self.move(int(screen_center.x() -1622 / 2), int(screen_center.y() - self.height() / 2))
+
+        #Initialize the Values from the Config File
+        self.minhue_slider.setValue(config.getint('FILTER_CONFIG','inputfilters_min_hue'))
+        self.maxhue_slider.setValue(config.getint('FILTER_CONFIG','inputfilters_max_hue'))
+        self.minsat_slider.setValue(config.getint('FILTER_CONFIG','inputfilters_min_saturation'))
+        self.maxsat_slider.setValue(config.getint('FILTER_CONFIG','inputfilters_max_saturation'))
+        self.minval_slider.setValue(config.getint('FILTER_CONFIG','inputfilters_min_value'))
+        self.maxval_slider.setValue(config.getint('FILTER_CONFIG','inputfilters_max_value'))
+        self.sataddsub_slider.setValue(config.getint('FILTER_CONFIG','inputfilters_saturation_booster'))
+        self.valaddsub_slider.setValue(config.getint('FILTER_CONFIG','inputfilters_value_booster'))
+        self.blurkernelsize_slider.setValue(config.getint('FILTER_CONFIG','inputfilters_blur_kernelsize'))
+        self.gaussianblur_slider.setValue(config.getint('FILTER_CONFIG','inputfilters_gaussian_blur'))
+        self.kernelsize_slider.setValue(config.getint('FILTER_CONFIG','inputfilters_kernelsize'))
+        self.erode1_slider.setValue(config.getint('FILTER_CONFIG','inputfilters_erode1'))
+        self.dilate1_slider.setValue(config.getint('FILTER_CONFIG','inputfilters_dilate1'))
+        self.erode2_slider.setValue(config.getint('FILTER_CONFIG','inputfilters_erode2'))
+        self.dilate2_slider.setValue(config.getint('FILTER_CONFIG','inputfilters_dilate2'))
+
+        self.minhue_spinbox.setValue(config.getint('FILTER_CONFIG','inputfilters_min_hue'))
+        self.maxhue_spinbox.setValue(config.getint('FILTER_CONFIG','inputfilters_max_hue'))
+        self.minsat_spinbox.setValue(config.getint('FILTER_CONFIG','inputfilters_min_saturation'))
+        self.maxsat_spinbox.setValue(config.getint('FILTER_CONFIG','inputfilters_max_saturation'))
+        self.minval_spinbox.setValue(config.getint('FILTER_CONFIG','inputfilters_min_value'))
+        self.maxval_spinbox.setValue(config.getint('FILTER_CONFIG','inputfilters_max_value'))
+        self.sataddsub_spinbox.setValue(config.getint('FILTER_CONFIG','inputfilters_saturation_booster'))
+        self.valaddsub_spinbox.setValue(config.getint('FILTER_CONFIG','inputfilters_value_booster'))
+        self.blurkernelsize_spinbox.setValue(config.getint('FILTER_CONFIG','inputfilters_blur_kernelsize'))
+        self.gaussianblur_spinbox.setValue(config.getint('FILTER_CONFIG','inputfilters_gaussian_blur'))
+        self.kernelsize_spinbox.setValue(config.getint('FILTER_CONFIG','inputfilters_kernelsize'))
+        self.erode1_spinbox.setValue(config.getint('FILTER_CONFIG','inputfilters_erode1'))
+        self.dilate1_spinbox.setValue(config.getint('FILTER_CONFIG','inputfilters_dilate1'))
+        self.erode2_spinbox.setValue(config.getint('FILTER_CONFIG','inputfilters_erode2'))
+        self.dilate2_spinbox.setValue(config.getint('FILTER_CONFIG','inputfilters_dilate2'))
+
+        self.updateinputfiltervalues()
+
+        # Refresh when Changed
+        self.reset_bt.clicked.connect(self.reset_values)
+        self.close_bt.clicked.connect(self.close_widget)
+
+        self.minhue_slider.valueChanged.connect(self.spinboxupdate)
+        self.minsat_slider.valueChanged.connect(self.spinboxupdate)
+        self.minval_slider.valueChanged.connect(self.spinboxupdate)
+        self.maxhue_slider.valueChanged.connect(self.spinboxupdate)
+        self.maxsat_slider.valueChanged.connect(self.spinboxupdate)
+        self.maxval_slider.valueChanged.connect(self.spinboxupdate)
+        self.sataddsub_slider.valueChanged.connect(self.spinboxupdate)
+        self.valaddsub_slider.valueChanged.connect(self.spinboxupdate)
+        self.blurkernelsize_slider.valueChanged.connect(self.spinboxupdate)
+        self.gaussianblur_slider.valueChanged.connect(self.spinboxupdate)
+        self.kernelsize_slider.valueChanged.connect(self.spinboxupdate)
+        self.erode1_slider.valueChanged.connect(self.spinboxupdate)
+        self.dilate1_slider.valueChanged.connect(self.spinboxupdate)
+        self.erode2_slider.valueChanged.connect(self.spinboxupdate)
+        self.dilate2_slider.valueChanged.connect(self.spinboxupdate)
+
+        self.minhue_spinbox.valueChanged.connect(self.sliderupdate)
+        self.minsat_spinbox.valueChanged.connect(self.sliderupdate)
+        self.minval_spinbox.valueChanged.connect(self.sliderupdate)
+        self.maxhue_spinbox.valueChanged.connect(self.sliderupdate)
+        self.maxsat_spinbox.valueChanged.connect(self.sliderupdate)
+        self.maxval_spinbox.valueChanged.connect(self.sliderupdate)
+        self.sataddsub_spinbox.valueChanged.connect(self.sliderupdate)
+        self.valaddsub_spinbox.valueChanged.connect(self.sliderupdate)
+        self.blurkernelsize_spinbox.valueChanged.connect(self.sliderupdate)
+        self.gaussianblur_spinbox.valueChanged.connect(self.sliderupdate)
+        self.kernelsize_spinbox.valueChanged.connect(self.sliderupdate)
+        self.erode1_spinbox.valueChanged.connect(self.sliderupdate)
+        self.dilate1_spinbox.valueChanged.connect(self.sliderupdate)
+        self.erode2_spinbox.valueChanged.connect(self.sliderupdate)
+        self.dilate2_spinbox.valueChanged.connect(self.sliderupdate)
+
+    def sliderupdate(self):
+        self.minhue_slider.setValue(self.minhue_spinbox.value())
+        self.minsat_slider.setValue(self.minsat_spinbox.value())
+        self.minval_slider.setValue(self.minval_spinbox.value())
+        self.maxhue_slider.setValue(self.maxhue_spinbox.value())
+        self.maxsat_slider.setValue(self.maxsat_spinbox.value())
+        self.maxval_slider.setValue(self.maxval_spinbox.value())
+        self.blurkernelsize_slider.setValue(self.blurkernelsize_spinbox.value())
+        self.gaussianblur_slider.setValue(self.gaussianblur_spinbox.value())
+        self.sataddsub_slider.setValue(self.sataddsub_spinbox.value())
+        self.valaddsub_slider.setValue(self.valaddsub_spinbox.value())
+        self.kernelsize_slider.setValue(self.kernelsize_spinbox.value())
+        self.erode1_slider.setValue(self.erode1_spinbox.value())
+        self.dilate1_slider.setValue(self.dilate1_spinbox.value())
+        self.erode2_slider.setValue(self.erode2_spinbox.value())
+        self.dilate2_slider.setValue(self.dilate2_spinbox.value())
+        self.sliderupdate_kernelsize()
+        self.updateconfigfiltervalues()
+
+    def spinboxupdate(self):
+        self.minhue_spinbox.setValue(self.minhue_slider.value())
+        self.minsat_spinbox.setValue(self.minsat_slider.value())
+        self.minval_spinbox.setValue(self.minval_slider.value())
+        self.maxhue_spinbox.setValue(self.maxhue_slider.value())
+        self.maxsat_spinbox.setValue(self.maxsat_slider.value())
+        self.maxval_spinbox.setValue(self.maxval_slider.value())
+        self.blurkernelsize_spinbox.setValue(self.blurkernelsize_slider.value())
+        self.gaussianblur_spinbox.setValue(self.gaussianblur_slider.value())
+        self.sataddsub_spinbox.setValue(self.sataddsub_slider.value())
+        self.valaddsub_spinbox.setValue(self.valaddsub_slider.value())
+        self.kernelsize_spinbox.setValue(self.kernelsize_slider.value())
+        self.erode1_spinbox.setValue(self.erode1_slider.value())
+        self.dilate1_spinbox.setValue(self.dilate1_slider.value())
+        self.erode2_spinbox.setValue(self.erode2_slider.value())
+        self.dilate2_spinbox.setValue(self.dilate2_slider.value())
+        self.spinboxupdate_kernelsize()
+        self.updateconfigfiltervalues()
+
+    def sliderupdate_kernelsize(self):
+        if (self.blurkernelsize_spinbox.value()%2)==0: #check if is pair
+            self.blurkernelsize_spinbox.setValue(self.blurkernelsize_spinbox.value()+1) #if pair add 1
+        self.blurkernelsize_slider.setValue(self.blurkernelsize_spinbox.value()) #set slider value
+        self.kernelsize_slider.setValue(self.kernelsize_spinbox.value()) #set slider value
+
+    def spinboxupdate_kernelsize(self):
+        if (self.blurkernelsize_slider.value()%2)==0: #check if is pair
+            self.blurkernelsize_slider.setValue(self.blurkernelsize_slider.value()+1) #if pair add 1
+        self.blurkernelsize_spinbox.setValue(self.blurkernelsize_slider.value()) #set spinbox value
+        self.kernelsize_spinbox.setValue(self.kernelsize_slider.value()) #set spinbox value
+
+        
+    def updateconfigfiltervalues(self):
+        config.set('FILTER_CONFIG', 'inputfilters_min_hue', str(self.minhue_slider.value()))
+        config.set('FILTER_CONFIG', 'inputfilters_max_hue', str(self.maxhue_slider.value()))
+        config.set('FILTER_CONFIG', 'inputfilters_min_saturation', str(self.minsat_slider.value()))
+        config.set('FILTER_CONFIG', 'inputfilters_max_saturation', str(self.maxsat_slider.value()))
+        config.set('FILTER_CONFIG', 'inputfilters_min_value', str(self.minval_slider.value()))
+        config.set('FILTER_CONFIG', 'inputfilters_max_value', str(self.maxval_slider.value()))
+        config.set('FILTER_CONFIG', 'inputfilters_blur_kernelsize', str(self.blurkernelsize_slider.value()))
+        config.set('FILTER_CONFIG', 'inputfilters_gaussian_blur', str(self.gaussianblur_slider.value()))
+        config.set('FILTER_CONFIG', 'inputfilters_saturation_booster', str(self.sataddsub_slider.value()))
+        config.set('FILTER_CONFIG', 'inputfilters_value_booster', str(self.valaddsub_slider.value()))
+        config.set('FILTER_CONFIG', 'inputfilters_kernelsize', str(self.kernelsize_slider.value()))
+        config.set('FILTER_CONFIG', 'inputfilters_erode1', str(self.erode2_slider.value()))
+        config.set('FILTER_CONFIG', 'inputfilters_dilate1', str(self.dilate2_slider.value()))
+        config.set('FILTER_CONFIG', 'inputfilters_erode2', str(self.erode2_slider.value()))
+        config.set('FILTER_CONFIG', 'inputfilters_dilate2', str(self.dilate2_slider.value()))
+        self.updateinputfiltervalues()
+
+    def reset_values(self):
+        self.minhue_slider.setValue(0)
+        self.maxhue_slider.setValue(179)
+        self.minsat_slider.setValue(0)
+        self.maxsat_slider.setValue(255)
+        self.minval_slider.setValue(0)
+        self.maxval_slider.setValue(255)
+        self.sataddsub_slider.setValue(0)
+        self.valaddsub_slider.setValue(0)
+        self.gaussianblur_slider.setValue(0)
+        self.kernelsize_slider.setValue(1)
+        self.erode1_slider.setValue(1)
+        self.dilate1_slider.setValue(1)
+        self.erode2_slider.setValue(1)
+        self.dilate2_slider.setValue(1)
+        self.spinboxupdate()
+
+         # Save the changes
+        with open('config.ini', 'w') as config_file:
+            config.write(config_file)
+        
+    def updateinputfiltervalues(self):
+        config.read('../config.ini')  # Replace 'config.ini' with the path to your configuration file
+        global customdetectionfilter
+        customdetectionfilter = Filter()
+        customdetectionfilter.minhue = self.minhue_slider.value()
+        customdetectionfilter.minsat = self.minsat_slider.value()
+        customdetectionfilter.minval = self.minval_slider.value()
+        customdetectionfilter.maxhue = self.maxhue_slider.value()
+        customdetectionfilter.maxsat = self.maxsat_slider.value()
+        customdetectionfilter.maxval = self.maxval_slider.value()
+        customdetectionfilter.sat_addsub = self.sataddsub_slider.value()
+        customdetectionfilter.val_addsub = self.valaddsub_slider.value()
+        customdetectionfilter.blurkernelsize = self.blurkernelsize_slider.value()
+        customdetectionfilter.gaussianblur = self.gaussianblur_slider.value()
+        customdetectionfilter.kernelsize = self.kernelsize_slider.value()
+        customdetectionfilter.erode1 = self.erode1_slider.value()
+        customdetectionfilter.dilate1 = self.dilate1_slider.value()
+        customdetectionfilter.erode2 = self.erode2_slider.value()
+        customdetectionfilter.dilate2 = self.dilate2_slider.value()
+
+        return customdetectionfilter
+    
+    def close_widget(self):
+        self.close()
+
+#####################################################################################################
 
 class AboutDialog(QDialog):
     def __init__(self, parent=None):
@@ -1219,31 +1471,125 @@ with open('config.ini', 'w') as config_file:
 global filter
 filter = Filter()
 filter.minhue = config.getint('FILTER_CONFIG','min_hue')
-filter.minsat = config.getint('FILTER_CONFIG','max_hue')
-filter.minval = config.getint('FILTER_CONFIG','min_saturation')
-filter.maxhue = config.getint('FILTER_CONFIG','max_saturation')
-filter.maxsat = config.getint('FILTER_CONFIG','min_value')
+filter.maxhue = config.getint('FILTER_CONFIG','max_hue')
+filter.minsat = config.getint('FILTER_CONFIG','min_saturation')
+filter.maxsat = config.getint('FILTER_CONFIG','max_saturation')
+filter.minval = config.getint('FILTER_CONFIG','min_value')
 filter.maxval = config.getint('FILTER_CONFIG','max_value')
 filter.sat_addsub = config.getint('FILTER_CONFIG','saturation_booster')
 filter.val_addsub = config.getint('FILTER_CONFIG','value_booster')
 filter.gaussianblur = config.getint('FILTER_CONFIG','gaussian_blur')
+filter.blurkernelsize = config.getint('FILTER_CONFIG', 'blur_kernelsize')
 filter.kernelsize = config.getint('FILTER_CONFIG','kernelsize')
 filter.cannyerode = config.getint('FILTER_CONFIG','canny_erode')
 filter.cannydilate = config.getint('FILTER_CONFIG','canny_dilate')
 filter.canny1 = config.getint('FILTER_CONFIG','canny_1')
 filter.canny2 = config.getint('FILTER_CONFIG','canny_2')
-filter.enablecanny = config.get('FILTER_CONFIG','canny_edge_enabled')
-filter.enablesobel = config.get('FILTER_CONFIG', 'sobel_enabled')
-filter.enablelaplace = config.get('FILTER_CONFIG', 'laplace_enabled')
-filter.output_erode = config.get('FILTER_CONFIG', 'output_erode')
-filter.output_dilate = config.get('FILTER_CONFIG', 'output_dilate')
+filter.enablecanny = config.getboolean('FILTER_CONFIG','canny_edge_enabled')
+filter.enablesobel = config.getboolean('FILTER_CONFIG', 'sobel_enabled')
+filter.enablelaplace = config.getboolean('FILTER_CONFIG', 'laplace_enabled')
+filter.output_erode = config.getint('FILTER_CONFIG', 'output_erode')
+filter.output_dilate = config.getint('FILTER_CONFIG', 'output_dilate')
 # ======================== \\-// ========================
+# ==== INICIALIZAÇÃO INICIAL DOS VALORES DOS FILTROS ====
+global customdetectionfilter
+customdetectionfilter = Filter()
+customdetectionfilter.minhue = config.getint('FILTER_CONFIG','inputfilters_min_hue')
+customdetectionfilter.maxhue = config.getint('FILTER_CONFIG','inputfilters_max_hue')
+customdetectionfilter.minsat = config.getint('FILTER_CONFIG','inputfilters_min_saturation')
+customdetectionfilter.maxsat = config.getint('FILTER_CONFIG','inputfilters_max_saturation')
+customdetectionfilter.minval = config.getint('FILTER_CONFIG','inputfilters_min_value')
+customdetectionfilter.maxval = config.getint('FILTER_CONFIG','inputfilters_max_value')
+customdetectionfilter.sat_addsub = config.getint('FILTER_CONFIG','inputfilters_saturation_booster')
+customdetectionfilter.val_addsub = config.getint('FILTER_CONFIG','inputfilters_value_booster')
+customdetectionfilter.gaussianblur = config.getint('FILTER_CONFIG','inputfilters_gaussian_blur')
+customdetectionfilter.blurkernelsize = config.getint('FILTER_CONFIG', 'inputfilters_blur_kernelsize')
+customdetectionfilter.kernelsize = config.getint('FILTER_CONFIG','inputfilters_kernelsize')
+customdetectionfilter.erode1 = config.getint('FILTER_CONFIG','inputfilters_erode1')
+customdetectionfilter.dilate1 = config.getint('FILTER_CONFIG','inputfilters_dilate1')
+customdetectionfilter.erode2 = config.getint('FILTER_CONFIG', 'inputfilters_erode2')
+customdetectionfilter.dilate2 = config.getint('FILTER_CONFIG', 'inputfilters_dilate2')
+# ======================== \\-// ========================
+
+# SplashScreen class
+class SplashScreen(QMainWindow):
+    def __init__(self, text="A Carregar: Dependências"):
+        super().__init__()
+        self.setStyleSheet("background-color: rgb(255,255,255);")
+        self.setWindowFlag(Qt.WindowType.FramelessWindowHint)
+
+        central_widget = QWidget()
+        central_widget.setStyleSheet("border: 5px solid black;")
+        central_widget.setContentsMargins(10, 6, 10, 6)
+        self.setCentralWidget(central_widget)
+
+        layout = QVBoxLayout(central_widget)
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        text_label = QLabel("Categorização de Maçãs", self)
+        text_label.setStyleSheet("font-size: 24pt; color: black; font-weight: bold; text-align: center; border: None;")
+        layout.addWidget(text_label, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        gif_label = QLabel(self)
+        gif_label.setStyleSheet("border: None;")
+        movie = QMovie("ui/icons/gif.gif")
+        gif_label.setMovie(movie)
+        movie.start()
+        layout.addWidget(gif_label, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        self.loading_label = QLabel(text, self)
+        self.loading_label.setStyleSheet("font-size: 8pt; color: black; text-align: center; border: None;")
+        layout.addWidget(self.loading_label, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        spacer = QLabel(self)
+        spacer.setStyleSheet("border: None;")
+        spacer.setFixedHeight(40)
+        layout.addWidget(spacer, alignment=Qt.AlignmentFlag.AlignCenter)
+        
+        footer_label = QLabel("© JBC 2023", self)
+        footer_label.setStyleSheet("font-size: 10pt; color: gray; text-align: center; border: None;")
+        layout.addWidget(footer_label, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        self.centerOnScreen()
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(10)
+        shadow.setColor(QColor('#222222'))
+        shadow.setOffset(0, 0)
+        self.setGraphicsEffect(shadow)
+
+    def centerOnScreen(self):
+        screen_geometry = QApplication.primaryScreen().availableGeometry()
+        x = int(round(screen_geometry.width()/2 - 200, 1))
+        y = int(round(screen_geometry.height()/2 - 206, 1))
+        self.move(x, y)
+
+        # Connect the worker to the SplashScreen
+        self.worker = Worker()
+        self.worker.finished.connect(self.on_worker_finished)
+
+        # Start the worker
+        self.worker.start()
+
+    def on_worker_finished(self):
+        # Close the splash screen when the worker finishes
+        self.close()
+
+class Worker(QThread):
+    finished = pyqtSignal()
+
+    def run(self):
+        time.sleep(0.5)
+        imports()
+        time.sleep(0.5)
+        self.finished.emit()
 
 # ========== CONSTRUCTOR ==========   
 if __name__ == '__main__':
     app = QApplication(sys.argv)
+    loading_splash = SplashScreen()
+    loading_splash.show()
+    app.exec()
+    app2 = QApplication(sys.argv)
     my_app = MyApp()
-    cfwidget = ColorFilters()
     my_app.show()
     sys.exit(app.exec())
-# ============= \\-// =============

@@ -1,19 +1,21 @@
 Trabalho a Fazer:
 
 Seguimento de Trabalho:
-❇️- Usar Visão da Câmara para estimar a largura das maçãs
+❇️- Usar Visão da Câmara para estimar a largura das maçãs (VERIFICAÇÃO)
+❇️- Meter deteção customizada (MAÇÃS VERDES + ADICIONAR JANELA DE FILTROS)
+❇️- Detetar se está danificada (ADICIONAR a categorização customizada)
 
 Curto Prazo / Prioritário:
-❇️- Meter outras tecnologias de deteção
+
 ❎- Testar com 2 Câmaras
 🟩- Fazer Object Tracking para contar e referenciar maçãs detetadas e para não as confundir com posteriores
-❎- Meter IO para ligar fitas de LED
+🟩- Meter IO para ligar fitas de LED
 
 Longo Prazo:
 ❎- Meter Stereo Vision
 
 Simultâneamente:
-❇️- Melhorar Ficheiro de Logs
+❇️- Melhorar Ficheiro de Logs (CONTAGEM)
 ❎- Meter mais prompts
 ❎- Separar as Funções por Módulos para fácil leitura
 

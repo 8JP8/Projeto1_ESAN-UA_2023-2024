@@ -65,7 +65,7 @@
     <widget class="QRadioButton" name="cam1_RADIOBT">
      <property name="geometry">
       <rect>
-       <x>560</x>
+       <x>555</x>
        <y>35</y>
        <width>71</width>
        <height>21</height>
@@ -81,7 +81,7 @@
     <widget class="QRadioButton" name="cam2_RADIOBT">
      <property name="geometry">
       <rect>
-       <x>560</x>
+       <x>555</x>
        <y>57</y>
        <width>81</width>
        <height>21</height>
@@ -272,27 +272,6 @@
       <string>Deteção:</string>
      </property>
     </widget>
-    <widget class="QComboBox" name="detectionmode_COMBOBOX_2">
-     <property name="geometry">
-      <rect>
-       <x>601</x>
-       <y>8</y>
-       <width>40</width>
-       <height>20</height>
-      </rect>
-     </property>
-     <property name="currentText">
-      <string>V1</string>
-     </property>
-     <property name="placeholderText" stdset="0">
-      <string>V1</string>
-     </property>
-     <item>
-      <property name="text">
-       <string>V1</string>
-      </property>
-     </item>
-    </widget>
     <widget class="QLabel" name="modoslb_3">
      <property name="geometry">
       <rect>
@@ -326,18 +305,23 @@
        <string>Tensorflow - Keras</string>
       </property>
      </item>
+     <item>
+      <property name="text">
+       <string>Custom</string>
+      </property>
+     </item>
     </widget>
     <widget class="QPushButton" name="colorfilters_BT">
      <property name="geometry">
       <rect>
-       <x>560</x>
+       <x>550</x>
        <y>7</y>
-       <width>30</width>
+       <width>91</width>
        <height>23</height>
       </rect>
      </property>
      <property name="text">
-      <string/>
+      <string>Filtros</string>
      </property>
      <property name="icon">
       <iconset>

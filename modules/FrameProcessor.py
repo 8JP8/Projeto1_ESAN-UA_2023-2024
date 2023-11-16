@@ -1,12 +1,15 @@
 from PyQt6.QtWidgets import QApplication, QMainWindow, QMessageBox, QPushButton
 from PyQt6.QtGui import QIcon
-import modules.code_v1 as code_v1
-import modules.MathFunctions as MathFunctions
-import main
 import cv2
 import os
 import numpy as np
 import configparser
+
+# ============ MODULES ============
+import modules.code_v1 as code_v1
+import modules.MathFunctions as MathFunctions
+from main import update_config_value
+# ============= \\-// =============
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 config = configparser.ConfigParser()
@@ -19,7 +22,6 @@ USE_CAMERA_CALIBRATION = config.getboolean('CAMERA_CONFIG', 'USE_CAMERA_CALIBRAT
 CHESSBOARD_INTERSECTION_LINES = config.getint('CAMERA_CONFIG', 'CHESSBOARD_INTERSECTION_LINES')
 CHESSBOARD_INTERSECTION_COLUMNS = config.getint('CAMERA_CONFIG', 'CHESSBOARD_INTERSECTION_COLUMNS')
 DRAW_CALIBRATION_LINES = config.getboolean('CAMERA_CONFIG', 'DRAW_CALIBRATION_LINES')
-
 
 def ImageProcessor(img_filepath, frame, threshold1, threshold2, filter):
     if os.path.isfile(img_filepath):
@@ -49,7 +51,7 @@ def VideoProcessor(vd_filepath, frame, threshold1, threshold2, filter):
             return (False, f"Erro: Vídeo '{os.path.basename(vd_filepath)}' não encontrado.")
     else:
         try:
-            newframe = code_v1.detect_and_classify_apples(frame, "video")
+            newframe = code_v1.detect_and_classify_apples(frame, "video", threshold1, threshold2, None)
             if APPLYFILTERS and filter!=None:
                 newframe = ApplyFilters(newframe, filter)
             return (True, newframe)
@@ -73,7 +75,6 @@ def ApplyFilters(imageframe, guifvalues):
     # Check if it's a 3-channel image (BGR)
     # Handle different channel formats (e.g., grayscale)
     # You might want to convert to BGR or handle differently based on your use case.
- 
     hsv = cv2.cvtColor(imageframe, cv2.COLOR_BGR2HSV)
     # add/subtract saturation and value
     h, s, v = cv2.split(hsv)
@@ -94,15 +95,15 @@ def ApplyFilters(imageframe, guifvalues):
     # convert back to BGR for imshow() to display it properly
     img = cv2.cvtColor(gaussianblur, cv2.COLOR_HSV2BGR)
     if guifvalues.enablecanny:
-        eroded_image = cv2.erode(result, kernel, iterations=guifvalues.cannyerode)
-        dilated_image = cv2.dilate(eroded_image, kernel, iterations=guifvalues.cannydilate)
+        dilated_image = cv2.dilate(img, kernel, iterations=guifvalues.cannydilate)
+        eroded_image = cv2.erode(dilated_image, kernel, iterations=guifvalues.cannyerode)
         # canny edge detection
-        result = cv2.Canny(dilated_image, guifvalues.canny1, guifvalues.canny2)
+        result = cv2.Canny(eroded_image, guifvalues.canny1, guifvalues.canny2)
         # Apply output dilation and erosion to the grayscale image
-        output_eroded_image = cv2.erode(result, kernel, iterations=guifvalues.output_erode)
-        output_dilated_image = cv2.dilate(output_eroded_image, kernel, iterations=guifvalues.output_dilate)
+        output_dilated_image = cv2.dilate(result, kernel, iterations=guifvalues.output_dilate)
+        output_eroded_image = cv2.erode(output_dilated_image, kernel, iterations=guifvalues.output_erode)
         # convert single channel image back to BGR
-        img = cv2.cvtColor(output_dilated_image, cv2.COLOR_GRAY2BGR)
+        img = cv2.cvtColor(output_eroded_image, cv2.COLOR_GRAY2BGR)
     elif guifvalues.enablesobel:
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         x = cv2.Sobel(gray, cv2.CV_64F, 1, 0, kernel, scale=1)
@@ -111,21 +112,41 @@ def ApplyFilters(imageframe, guifvalues):
         absy = cv2.convertScaleAbs(y)
         edge = cv2.addWeighted(absx, 0.5, absy, 0.5, 0)
         # Apply output dilation and erosion to the grayscale image
-        output_eroded_image = cv2.erode(edge, kernel, iterations=guifvalues.output_erode)
-        output_dilated_image = cv2.dilate(output_eroded_image, kernel, iterations=guifvalues.output_dilate)
+        output_dilated_image = cv2.dilate(result, kernel, iterations=guifvalues.output_dilate)
+        output_eroded_image = cv2.erode(output_dilated_image, kernel, iterations=guifvalues.output_erode)
         # convert single channel image back to BGR
-        img = cv2.cvtColor(output_dilated_image, cv2.COLOR_GRAY2BGR)
+        img = cv2.cvtColor(output_eroded_image, cv2.COLOR_GRAY2BGR)
     elif guifvalues.enablelaplace:
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         laplacian = cv2.Laplacian(gray, cv2.CV_64F, ksize=guifvalues.kernelsize)
         # Apply output dilation and erosion to the grayscale image
-        output_eroded_image = cv2.erode(laplacian, kernel, iterations=guifvalues.output_erode)
-        output_dilated_image = cv2.dilate(output_eroded_image, kernel, iterations=guifvalues.output_dilate)
+        output_dilated_image = cv2.dilate(laplacian, kernel, iterations=guifvalues.output_dilate)
+        output_eroded_image = cv2.erode(output_dilated_image, kernel, iterations=guifvalues.output_erode)
         # Convert from 64-bit float to 8-bit unsigned integer
-        output_dilated_image = cv2.convertScaleAbs(output_dilated_image)
+        output_eroded_image = cv2.convertScaleAbs(output_eroded_image)
         # convert single channel image back to BGR
-        img = cv2.cvtColor(output_dilated_image, cv2.COLOR_GRAY2BGR)
+        img = cv2.cvtColor(output_eroded_image, cv2.COLOR_GRAY2BGR)
 
+    return img
+
+def InputFiltersVisualization(imageframe, guifvalues):
+    hsv = cv2.cvtColor(imageframe, cv2.COLOR_BGR2HSV)
+    h, s, v = cv2.split(hsv)
+    s = shift_channel(s, guifvalues.sat_addsub)
+    v = shift_channel(v, guifvalues.val_addsub)
+    hsv = cv2.merge([h, s, v])
+    lower = np.array([guifvalues.minhue, guifvalues.minsat, guifvalues.minval])
+    upper = np.array([guifvalues.maxhue, guifvalues.maxsat, guifvalues.maxval])
+    mask = cv2.inRange(hsv, lower, upper)
+    result = cv2.bitwise_and(hsv, hsv, mask=mask)
+    kernel = np.ones((guifvalues.kernelsize, guifvalues.kernelsize), np.uint8)
+    kernelsize = (int(guifvalues.blurkernelsize),int(guifvalues.blurkernelsize))
+    gaussianblur = cv2.GaussianBlur(result, kernelsize, guifvalues.gaussianblur)
+    img = cv2.cvtColor(gaussianblur, cv2.COLOR_HSV2BGR)
+    dilated_image = cv2.dilate(img, kernel, iterations=guifvalues.dilate1)
+    eroded_image = cv2.erode(dilated_image, kernel, iterations=guifvalues.erode1)
+    dilated_image = cv2.dilate(eroded_image, kernel, iterations=guifvalues.dilate2)
+    eroded_image = cv2.erode(dilated_image, kernel, iterations=guifvalues.erode2)
     return img
 
 # CAMERA CALIBRATION
@@ -156,12 +177,12 @@ def cameracalibrationprocessor(frameoriginal):
         return None
     
 def update_calibdata_in_configfile(calibdata):
-    main.update_config_value('CALIBRATION_DATA', 'intrinsmat', array_to_ini_string(calibdata[2]))
-    main.update_config_value('CALIBRATION_DATA', 'distcoeffs', array_to_ini_string(calibdata[3]))
-    main.update_config_value('CALIBRATION_DATA', 'rvecs', array_to_ini_string(calibdata[4]))
-    main.update_config_value('CALIBRATION_DATA', 'tvecs', array_to_ini_string(calibdata[5]))
-    main.update_config_value('CALIBRATION_DATA', 'imgoriginaxis', array_to_ini_string(calibdata[6]))
-    main.update_config_value('CALIBRATION_DATA', 'imgoutercorners', array_to_ini_string(calibdata[7]))
+    update_config_value('CALIBRATION_DATA', 'intrinsmat', array_to_ini_string(calibdata[2]))
+    update_config_value('CALIBRATION_DATA', 'distcoeffs', array_to_ini_string(calibdata[3]))
+    update_config_value('CALIBRATION_DATA', 'rvecs', array_to_ini_string(calibdata[4]))
+    update_config_value('CALIBRATION_DATA', 'tvecs', array_to_ini_string(calibdata[5]))
+    update_config_value('CALIBRATION_DATA', 'imgoriginaxis', array_to_ini_string(calibdata[6]))
+    update_config_value('CALIBRATION_DATA', 'imgoutercorners', array_to_ini_string(calibdata[7]))
 
 def array_to_ini_string(array, delimiter=','):
     if not isinstance(array, (list, np.ndarray)):

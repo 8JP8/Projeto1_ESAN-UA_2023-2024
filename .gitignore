@@ -1,2 +1,4 @@
 AppleCategorizationPython/modules/models/yolov4-tiny.weights
 *.weights
+*.h5
+modules/models/
