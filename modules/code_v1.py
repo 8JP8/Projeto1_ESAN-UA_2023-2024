@@ -103,6 +103,8 @@ def determine_apple_type(pixel_caliber, diameter, categorization_confidence):
     global THRESHOLD_1, THRESHOLD_2  # Declare these as global
     if categorization_confidence >= THRESHOLD_2:
         return "Bad Apple"
+    elif categorization_confidence == -1:
+        return "???"
     elif CAMERA_CALC_DIAMETER and not diameter == pixel_caliber:
         if diameter > DIAMETER_SEPARATION:
             return "Big Apple"
@@ -131,7 +133,6 @@ def detect_and_classify_apples(frame, type, threshold1, threshold2, calibresult)
         result = customdetection.detect(inputframe, type)
         frame = result[0]
         circles = result[1]
-        #cv2.imwrite("ola.png", frame)
 
         for apple in circles:
             x = apple[0]
@@ -139,11 +140,30 @@ def detect_and_classify_apples(frame, type, threshold1, threshold2, calibresult)
             r = apple[2]
 
             apple_quadrants = np.array([
-                [x+r, y],
+                [x, y-r],
+                [x-r, y],
                 [x, y+r],
-                [x+r, y+r*2],
-                [x+r*2, y+r]
+                [x+r, y]
             ], dtype=np.float32)
+
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            apple = frame[int(y-r):int(y + r*2), int(x-r):int(x + r*2)]
+
+            if CATEGORIZATIONMODE_VALUE == '0':
+
+                if apple.shape[0] > 0 and apple.shape[1] > 0:
+                    if apple.shape[0] != 100 or apple.shape[1] != 100:
+                        apple = cv2.resize(apple, (100, 100))
+                    apple = img_to_array(apple)
+                    apple = preprocess_input(apple)
+                    apple = np.expand_dims(apple, axis=0)
+
+                    prediction = model.predict(apple)
+                    categorization_confidence = prediction[0][0]
+                    
+            else:
+                categorization_confidence = -1 
+            
 
             if CAMERA_CALC_DIAMETER and (type == "camera"):
                 #Get width information
@@ -171,7 +191,7 @@ def detect_and_classify_apples(frame, type, threshold1, threshold2, calibresult)
                 diameter = r*2
 
             timestamp = datetime.datetime.now().strftime("%Y-%m-d %H:%M:%S")
-            categorization_confidence = 0 #################################################### ⬅️⚠️
+
             apple_type = determine_apple_type(r*2, diameter, categorization_confidence)
             # Log the apple's data
             with open(LOG_FILE_PATH, 'a') as log:
@@ -188,7 +208,7 @@ def detect_and_classify_apples(frame, type, threshold1, threshold2, calibresult)
                 text = f"Diametro: {diameter}cm | {apple_type}"
             else:
                 text = f"Largura: {round(r*2,2)}px | {apple_type}"
-            text_size, _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 2)
+            text_size, _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.8, 2)
             text_x = int(x - text_size[0]/2)
             text_y = int(y + text_size[1]/2)
             if categorization_confidence >= THRESHOLD_2:
@@ -316,7 +336,7 @@ def detect_and_classify_apples(frame, type, threshold1, threshold2, calibresult)
                                 text = f"Diametro: {diameter}cm | {apple_type}"
                             else:
                                 text = f"Largura: {pixel_caliber}px | {apple_type}"
-                            text_size, _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 2)
+                            text_size, _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.8, 2)
                             text_x = x + (w - text_size[0]) // 2
                             text_y = y + (h + text_size[1]) // 2
                             if categorization_confidence > THRESHOLD_2:
