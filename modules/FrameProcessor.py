@@ -23,12 +23,12 @@ DRAW_CALIBRATION_LINES = config.getboolean('CAMERA_CONFIG', 'DRAW_CALIBRATION_LI
 
 def ImageProcessor(img_filepath, frame, threshold1, threshold2, filter):
     if os.path.isfile(img_filepath):
-        try:
+        if cv2.imread(img_filepath) is not None:
             frame = code_v1.detect_and_classify_apples(frame, "image", threshold1, threshold2, None)
             if APPLYFILTERS and filter!=None:
                 frame = ApplyFilters(frame, filter)
             return (True, frame)
-        except:
+        else:
             return(False, f"Erro: Não foi possível abrir o ficheiro '{os.path.basename(img_filepath)}'.")
     else:
         return(False, f"Erro: Imagem '{os.path.basename(img_filepath)}' não encontrada.")
