@@ -51,7 +51,9 @@ def config_color_ranges():
     high_apple_red_2 = literal_eval(config.get('CUSTOM_DETECTION_CONFIG', 'high_apple_red_2'))
     low_apple_golden = literal_eval(config.get('CUSTOM_DETECTION_CONFIG', 'low_apple_golden'))
     high_apple_golden = literal_eval(config.get('CUSTOM_DETECTION_CONFIG', 'high_apple_golden'))
-    return (low_apple_red, high_apple_red, low_apple_red_2, high_apple_red_2, low_apple_golden, high_apple_golden)
+    low_apple_green = literal_eval(config.get('CUSTOM_DETECTION_CONFIG', 'low_apple_green'))
+    high_apple_green = literal_eval(config.get('CUSTOM_DETECTION_CONFIG', 'high_apple_green'))
+    return (low_apple_red, high_apple_red, low_apple_red_2, high_apple_red_2, low_apple_golden, high_apple_golden, low_apple_green, high_apple_green)
 
 def convert_hsv_inputs(inputarray):
     # Calculate the converted values
@@ -81,13 +83,14 @@ def detect(src_img, type):
         mask_red = cv2.inRange(image_hsv, convert_hsv_inputs(color_ranges[0]), convert_hsv_inputs(color_ranges[1]))
         mask_red_raw = cv2.inRange(image_hsv, convert_hsv_inputs(color_ranges[2]), convert_hsv_inputs(color_ranges[3]))
         mask_golden = cv2.inRange(image_hsv, convert_hsv_inputs(color_ranges[4]), convert_hsv_inputs(color_ranges[5]))
-        mask = mask_red + mask_red_raw + mask_golden
+        mask_green = cv2.inRange(image_hsv, convert_hsv_inputs(color_ranges[6]), convert_hsv_inputs(color_ranges[7]))
+        mask = mask_red + mask_red_raw + mask_golden + mask_green
         kernel = np.ones((customdetectionfilter.kernelsize, customdetectionfilter.kernelsize), np.uint8)
         dilated_image = cv2.dilate(mask, kernel, iterations=customdetectionfilter.dilate1)
         eroded_image = cv2.erode(dilated_image, kernel, iterations=customdetectionfilter.erode1)
         dilated2_image = cv2.dilate(eroded_image, kernel, iterations=customdetectionfilter.dilate2)
         eroded2_image = cv2.erode(dilated2_image, kernel, iterations=customdetectionfilter.erode2)
-
+        
         cnts, _ = cv2.findContours(eroded2_image.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         c_num = 0
         circles = []

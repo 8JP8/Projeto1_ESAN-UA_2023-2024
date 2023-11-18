@@ -79,6 +79,9 @@
      </property>
     </widget>
     <widget class="QRadioButton" name="cam2_RADIOBT">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="geometry">
       <rect>
        <x>555</x>
@@ -314,9 +317,9 @@
     <widget class="QPushButton" name="colorfilters_BT">
      <property name="geometry">
       <rect>
-       <x>550</x>
+       <x>571</x>
        <y>7</y>
-       <width>91</width>
+       <width>71</width>
        <height>23</height>
       </rect>
      </property>
@@ -754,7 +757,7 @@ border: 1px solid grey;</string>
   <action name="action_calibratecamera">
    <property name="icon">
     <iconset>
-     <normaloff>icons/Paomedia-Small-N-Flat-Webcam.512.ico</normaloff>icons/Paomedia-Small-N-Flat-Webcam.512.ico</iconset>
+     <normaloff>icons/webcam.ico</normaloff>icons/webcam.ico</iconset>
    </property>
    <property name="text">
     <string>Calibrar Câmara (Ctrl+Shift+C)</string>

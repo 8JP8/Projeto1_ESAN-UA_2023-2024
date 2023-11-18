@@ -97,9 +97,8 @@ def calculate_iou(box1, box2):
     return iou
 
 # Function to determine apple type (Big, Small, Bad)
-def determine_apple_type(pixel_caliber, diameter, categorization_confidence):
-    global THRESHOLD_1, THRESHOLD_2  # Declare these as global
-    if categorization_confidence >= THRESHOLD_2:
+def determine_apple_type(pixel_caliber, diameter, categorization_confidence, threshold2):
+    if categorization_confidence >= threshold2:
         return "Bad Apple"
     elif categorization_confidence == -1:
         return "???"
@@ -191,7 +190,7 @@ def detect_and_classify_apples(frame, type, detectionmode, categorizationmode, t
 
             timestamp = datetime.datetime.now().strftime("%Y-%m-d %H:%M:%S")
 
-            apple_type = determine_apple_type(r*2, diameter, categorization_confidence)
+            apple_type = determine_apple_type(r*2, diameter, categorization_confidence, threshold2)
             # Log the apple's data
             with open(LOG_FILE_PATH, 'a') as log:
                 if CAMERA_CALC_DIAMETER or type != 'camera':
@@ -315,7 +314,7 @@ def detect_and_classify_apples(frame, type, detectionmode, categorizationmode, t
                                 diameter = pixel_caliber
 
                             # Determine apple type
-                            apple_type = determine_apple_type(pixel_caliber, diameter, categorization_confidence)
+                            apple_type = determine_apple_type(pixel_caliber, diameter, categorization_confidence, threshold2)
 
                             timestamp = datetime.datetime.now().strftime("%Y-%m-d %H:%M:%S")
 

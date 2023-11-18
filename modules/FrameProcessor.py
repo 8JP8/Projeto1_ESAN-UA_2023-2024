@@ -112,7 +112,7 @@ def ApplyFilters(imageframe, guifvalues):
         absy = cv2.convertScaleAbs(y)
         edge = cv2.addWeighted(absx, 0.5, absy, 0.5, 0)
         # Apply output dilation and erosion to the grayscale image
-        output_dilated_image = cv2.dilate(result, kernel, iterations=guifvalues.output_dilate)
+        output_dilated_image = cv2.dilate(edge, kernel, iterations=guifvalues.output_dilate)
         output_eroded_image = cv2.erode(output_dilated_image, kernel, iterations=guifvalues.output_erode)
         # convert single channel image back to BGR
         img = cv2.cvtColor(output_eroded_image, cv2.COLOR_GRAY2BGR)

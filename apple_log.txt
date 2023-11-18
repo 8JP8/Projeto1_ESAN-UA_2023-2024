@@ -1,4 +1,1 @@
 Timestamp,Type,Diameter
-Processamento de câmara iniciado
-2023-11-d 02:30:43,Bad Apple,4.4cm
-2023-11-d 02:30:43,Bad Apple,4.4cm

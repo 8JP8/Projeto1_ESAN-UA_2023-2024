@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QApplication, QMainWindow, QMessageBox, QFileDialog, QApplication, QPushButton, QVBoxLayout, QLabel, QDialog, QWidget, QTabWidget,  QVBoxLayout, QGraphicsDropShadowEffect
+from PyQt6.QtWidgets import QApplication, QMainWindow, QMessageBox, QFileDialog, QApplication, QPushButton, QVBoxLayout, QLabel, QDialog, QWidget, QTabWidget,  QVBoxLayout, QGraphicsDropShadowEffect, QSizePolicy
 from PyQt6.uic import loadUi
 from PyQt6.QtCore import pyqtSignal, Qt, QPropertyAnimation, QSize, QTimer, QThread, QMetaObject, Q_ARG
 from PyQt6.QtGui import QImage, QPixmap, QIcon, QCloseEvent, QAction, QKeySequence, QShortcut, QPalette, QColor, QMovie, QGuiApplication
@@ -1428,8 +1428,9 @@ class InputFilters(QWidget):
 class AboutDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         self.setWindowTitle("Informações")
-        self.setMinimumWidth(300)  # Adjust the width as needed
+        #self.setMinimumWidth(405)  # Adjust the width as needed
 
         # Create a label for the image
         image_label = QLabel()
@@ -1443,9 +1444,15 @@ class AboutDialog(QDialog):
         image_label.setPixmap(pixmap)
         image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
+        # Add the title and description text
+        title_text = QLabel("<b>CATEGORIZAÇÃO DE MAÇÃS</b>")
+        title_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        description_text = QLabel("Esta aplicação separa maçãs entre GRANDES, PEQUENAS e DEFEITUOSAS.\n")
+        description_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
         # Add a paragraph to explain the keys
+        keys_title = QLabel("<b>- Atalhos de Teclado:</b>")
         keys_paragraph = QLabel(
-            "Atalhos de Teclado:\n\n"
             "Iniciar/Parar - I ou P\n"
             "Congelar Frame - C\n"
             "Próximo Frame - N\n"
@@ -1455,12 +1462,15 @@ class AboutDialog(QDialog):
             "Guardar Frame - Ctrl+F\n"
             "Vista Pequena - Ctrl+Left\n"
             "Vista Grande - Ctrl+Right\n"
+            "Vista Grande - Separador Seguinte - Ctrl+Up\n"
+            "Vista Grande - Separador Anterior - Ctrl+Down\n"
             "Calibrar Câmara - Ctrl+Shift+C\n"
             "Abrir Configuração - Ctrl+D\n"
             "Ver Logs - Ctrl+L\n"
             "Exportar Logs - Ctrl+Shift+L\n"
             "Reiniciar App - Ctrl+Shift+R"
         )
+        keys_paragraph.setWordWrap(True)  # Enable word wrapping for long lines
 
         # Add the copyright text
         copyright_text = QLabel("Copyright © JBC 2023")
@@ -1469,6 +1479,9 @@ class AboutDialog(QDialog):
         # Create a layout for the dialog
         layout = QVBoxLayout()
         layout.addWidget(image_label)
+        layout.addWidget(title_text)
+        layout.addWidget(description_text)
+        layout.addWidget(keys_title)
         layout.addWidget(keys_paragraph)
         layout.addWidget(copyright_text)
 
@@ -1478,6 +1491,7 @@ class AboutDialog(QDialog):
         layout.addWidget(ok_button)
 
         self.setLayout(layout)
+
 
 
  # Save the changes
