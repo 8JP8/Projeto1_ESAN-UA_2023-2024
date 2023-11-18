@@ -21,12 +21,13 @@ config.read('config.ini')  # Replace 'config.ini' with the path to your configur
 #Global Variables
 calib_camera_enabled = False
 loadingcompleted = False
+global USE_TWO_CAMERAS
 
 # CONFIG GLOBAL VARIABLES
 USE_TWO_CAMERAS = config.getboolean('CAMERA_CONFIG', 'USE_TWO_CAMERAS')
 CAMERA_INDEX_LEFT = config.getint('CAMERA_CONFIG', 'CAMERA_INDEX_LEFT')    # Camera index for the left camera (if using two cameras)
 CAMERA_INDEX_RIGHT = config.getint('CAMERA_CONFIG', 'CAMERA_INDEX_RIGHT')
-DETECTIONMODE = config.get('DETECTION_CONFIG', 'DETECTIONMODE_VALUE')
+DETECTIONMODE = config.getint('DETECTION_CONFIG', 'DETECTIONMODE_VALUE')
 
 def imports():
     # ============ IMPORTS ============
@@ -49,7 +50,7 @@ class MyApp(QMainWindow):                     #GUI CLASS
         self.detectionmode_COMBOBOX.setCurrentIndex(config.getint('DETECTION_CONFIG', 'detectionmode_value'))
         self.categorizationmode_COMBOBOX.setCurrentIndex(config.getint('DETECTION_CONFIG', 'categorizationmode_value'))
         self.cam2_RADIOBT.setChecked(config.getboolean('CAMERA_CONFIG', 'use_two_cameras'))
-        if DETECTIONMODE == (-1 or 0 or 1):
+        if DETECTIONMODE in [-1, 0, 1]:
             self.threshold1_SLIDER.setValue(config.getint('DETECTION_CONFIG', 'threshold1_value'))
             self.threshold2_SLIDER.setValue(config.getint('DETECTION_CONFIG', 'threshold2_value'))
         elif DETECTIONMODE == 2:
@@ -92,7 +93,7 @@ class MyApp(QMainWindow):                     #GUI CLASS
         self.threshold1_SLIDER.valueChanged.connect(self.update_config)
         self.threshold2_SLIDER.valueChanged.connect(self.update_config)
         self.mode_COMBOBOX.currentIndexChanged.connect(self.update_config)
-        self.detectionmode_COMBOBOX.currentIndexChanged.connect(self.update_config)
+        self.detectionmode_COMBOBOX.currentIndexChanged.connect(self.detectionmode_changed)
         self.categorizationmode_COMBOBOX.currentIndexChanged.connect(self.update_config)
         self.cam1_RADIOBT.toggled.connect(self.update_config)
         self.cam2_RADIOBT.toggled.connect(self.update_config)
@@ -158,7 +159,7 @@ class MyApp(QMainWindow):                     #GUI CLASS
                     log.write(f"Processamento de imagem iniciado\n")
                 # ============= OLD RESIZE CODE TO FIT THE IMAGE ============ →→→→→→→→→→→→  frame = imutils.resize(image, width=self.inputframe_1.width, height=self.inputframe_1.height)
                 #Preview the input filters
-                if DETECTIONMODE == '2':
+                if DETECTIONMODE == 2:
                     image = FrameProcessor.InputFiltersVisualization(image, customdetectionfilter)
                 # ========= CALCULATIONS TO KEEP IMAGE ASPECT RATIO =========
                 width_scalei = int(self.inputframe_1.width()) / image.shape[1]
@@ -190,7 +191,7 @@ class MyApp(QMainWindow):                     #GUI CLASS
                 
                 # =========================== \\--// ===========================
                 if self.detectionmode_COMBOBOX.currentIndex() in [-1, 0, 1, 2]:
-                    processedimage = FrameProcessor.ImageProcessor(self.filename, image, self.threshold1_SLIDER.value(), self.threshold2_SLIDER.value(), filter)
+                    processedimage = FrameProcessor.ImageProcessor(self.filename, image, self.detectionmode_COMBOBOX.currentIndex(), self.categorizationmode_COMBOBOX.currentIndex(), self.threshold1_SLIDER.value(), self.threshold2_SLIDER.value(), filter)
                     if not processedimage[0]:
                         self.show_warning(processedimage[1])
                     else:
@@ -286,7 +287,7 @@ class MyApp(QMainWindow):                     #GUI CLASS
                 progress = (current_frame / self.total_frames) * 100
                 self.progressBar.setValue(int(progress))
                 #Preview the input filters
-                if DETECTIONMODE == '2':
+                if DETECTIONMODE == 2:
                     frame = FrameProcessor.InputFiltersVisualization(frame, customdetectionfilter)
                 # Calculate the scale and apply resizing
                 self.hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
@@ -320,7 +321,7 @@ class MyApp(QMainWindow):                     #GUI CLASS
                 
                 if self.detectionmode_COMBOBOX.currentIndex() in [-1, 0, 1, 2]:
                     #frame processing
-                    processor_result = FrameProcessor.VideoProcessor(video, processoriginalquality, self.threshold1_SLIDER.value(), self.threshold2_SLIDER.value(), filter)
+                    processor_result = FrameProcessor.VideoProcessor(video, processoriginalquality, self.detectionmode_COMBOBOX.currentIndex(), self.categorizationmode_COMBOBOX.currentIndex(), self.threshold1_SLIDER.value(), self.threshold2_SLIDER.value(), filter)
                     if not processor_result[0]:
                         self.show_warning(processor_result[1])
                     else:
@@ -387,12 +388,16 @@ class MyApp(QMainWindow):                     #GUI CLASS
                 if USE_TWO_CAMERAS:
                     self.cap_left = cv2.VideoCapture(CAMERA_INDEX_LEFT)
                     self.cap_right = cv2.VideoCapture(CAMERA_INDEX_RIGHT)
-                    return self.cap_left, self.cap_right
+                    # Check if the camera was opened successfully
+                    if self.cap_left.isOpened() and self.cap_right.isOpened():
+                        self.camopen = True
+                        return self.cap_left, self.cap_right
                 else:
                     self.camera = cv2.VideoCapture(0)  # 0 represents the default camera
-                # Check if the camera was opened successfully
-                if self.camera.isOpened():
-                    self.camopen = True
+                    # Check if the camera was opened successfully
+                    if self.camera.isOpened():
+                        self.camopen = True
+                if self.camopen:
                     self.modify_startbutton("parar")
                     print("Processamento de Frames Iniciado")
                     threading.Thread(target=self.cameracapture_to_gui_thread).start() #Updates the gui with camera feed
@@ -412,7 +417,7 @@ class MyApp(QMainWindow):                     #GUI CLASS
                     except:
                         self.show_warning("Erro: Câmara não disponível.")
                     #Preview the input filters
-                    if DETECTIONMODE == '2':
+                    if DETECTIONMODE == 2:
                         frame_left = FrameProcessor.InputFiltersVisualization(frame_left, customdetectionfilter)
                         frame_right = FrameProcessor.InputFiltersVisualization(frame_right, customdetectionfilter)
                     # Calculate the scale and apply resizing
@@ -428,7 +433,7 @@ class MyApp(QMainWindow):                     #GUI CLASS
                     except:
                         self.show_warning("Erro: Câmara não disponível.")
                     #Preview the input filters
-                    if DETECTIONMODE == '2':
+                    if DETECTIONMODE == 2:
                         frame = FrameProcessor.InputFiltersVisualization(frame, customdetectionfilter)
                     # Calculate the scale and apply resizing
                     self.hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
@@ -480,8 +485,8 @@ class MyApp(QMainWindow):                     #GUI CLASS
                         self.inputframe_2.setPixmap(QPixmap.fromImage(image2))
                         self.inputframe_4.setPixmap(QPixmap.fromImage(image4))
                         # Frame processing
-                        processor_result = FrameProcessor.CameraProcessor(self, frameoriginal, self.threshold1_SLIDER.value(), self.threshold2_SLIDER.value(), filter)
-                        processor_result2 = FrameProcessor.CameraProcessor(self, frameoriginal2, self.threshold1_SLIDER.value(), self.threshold2_SLIDER.value(), filter)
+                        processor_result = FrameProcessor.CameraProcessor(frameoriginal, self.detectionmode_COMBOBOX.currentIndex(), self.categorizationmode_COMBOBOX.currentIndex(), self.threshold1_SLIDER.value(), self.threshold2_SLIDER.value(), filter)
+                        processor_result2 = FrameProcessor.CameraProcessor(frameoriginal2, self.detectionmode_COMBOBOX.currentIndex(), self.categorizationmode_COMBOBOX.currentIndex(), self.threshold1_SLIDER.value(), self.threshold2_SLIDER.value(), filter)
                         if not processor_result[0] or not processor_result2[0]:
                             self.show_warning(processor_result[1])
                         else:
@@ -558,7 +563,7 @@ class MyApp(QMainWindow):                     #GUI CLASS
                     self.inputframe_3.setPixmap(QPixmap.fromImage(image2))
                     
                     if self.detectionmode_COMBOBOX.currentIndex() in [-1, 0, 1, 2]:
-                        processor_result = FrameProcessor.CameraProcessor(self, frameoriginal, self.threshold1_SLIDER.value(), self.threshold2_SLIDER.value(), filter)
+                        processor_result = FrameProcessor.CameraProcessor(frameoriginal, self.detectionmode_COMBOBOX.currentIndex(), self.categorizationmode_COMBOBOX.currentIndex(), self.threshold1_SLIDER.value(), self.threshold2_SLIDER.value(), filter)
 
                         if not processor_result[0]:
                             self.show_warning(processor_result[1])
@@ -818,9 +823,19 @@ class MyApp(QMainWindow):                     #GUI CLASS
     def info_open(self):    
         info_dialog = AboutDialog()
         info_dialog.exec()
+
+    def detectionmode_changed(self):
+        if self.detectionmode_COMBOBOX.currentIndex() in [-1, 0, 1]:
+            self.threshold1_SLIDER.setValue(config.getint('DETECTION_CONFIG', 'threshold1_value'))
+            self.threshold2_SLIDER.setValue(config.getint('DETECTION_CONFIG', 'threshold2_value'))
+        elif self.detectionmode_COMBOBOX.currentIndex() == 2:
+            self.threshold1_SLIDER.setValue(config.getint('CUSTOM_DETECTION_CONFIG', 'threshold1_value'))
+            self.threshold2_SLIDER.setValue(config.getint('CUSTOM_DETECTION_CONFIG', 'threshold2_value'))
+        self.update_config()
     
     def update_config(self):
-        if config.getint('DETECTION_CONFIG', 'detectionmode_value') == (-1 or 0 or 1):
+        global USE_TWO_CAMERAS
+        if config.getint('DETECTION_CONFIG', 'detectionmode_value') in [-1, 0, 1]:
             config.set('DETECTION_CONFIG', 'threshold1_value', str(self.threshold1_SLIDER.value()))
             config.set('DETECTION_CONFIG', 'threshold2_value', str(self.threshold2_SLIDER.value()))
         elif config.getint('DETECTION_CONFIG', 'detectionmode_value') == 2:
@@ -830,6 +845,8 @@ class MyApp(QMainWindow):                     #GUI CLASS
         config.set('DETECTION_CONFIG', 'detectionmode_value', str(self.detectionmode_COMBOBOX.currentIndex()))
         config.set('DETECTION_CONFIG', 'categorizationmode_value', str(self.categorizationmode_COMBOBOX.currentIndex()))
         config.set('CAMERA_CONFIG', 'use_two_cameras', str(self.cam2_RADIOBT.isChecked()))
+        USE_TWO_CAMERAS = self.cam2_RADIOBT.isChecked()
+
         
         # Save the changes
         with open('config.ini', 'w') as config_file:

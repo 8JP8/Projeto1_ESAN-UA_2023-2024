@@ -1,13 +1,12 @@
 Trabalho a Fazer:
 
 Seguimento de Trabalho:
+❎- Testar com 2 Câmaras
 ❇️- Usar Visão da Câmara para estimar a largura das maçãs (VERIFICAÇÃO)
-❇️- Meter deteção customizada (MAÇÃS VERDES + ADICIONAR JANELA DE FILTROS)
+❇️- Meter deteção customizada (MAÇÃS VERDES)
 ❇️- Detetar se está danificada (ADICIONAR a categorização customizada)
 
 Curto Prazo / Prioritário:
-
-❎- Testar com 2 Câmaras
 🟩- Fazer Object Tracking para contar e referenciar maçãs detetadas e para não as confundir com posteriores
 🟩- Meter IO para ligar fitas de LED
 

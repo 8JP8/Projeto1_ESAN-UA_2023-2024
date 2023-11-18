@@ -27,8 +27,6 @@ global USE_TWO_CAMERAS,CAMERA_INDEX_LEFT,CAMERA_INDEX_RIGHT,PIXEL_SEPARATION,DIA
 USE_TWO_CAMERAS = config.getboolean('CAMERA_CONFIG', 'USE_TWO_CAMERAS')       # Set to True if using two cameras for stereo vision
 CAMERA_INDEX_LEFT = config.getint('CAMERA_CONFIG', 'CAMERA_INDEX_LEFT')    # Camera index for the left camera (if using two cameras)
 CAMERA_INDEX_RIGHT = config.getint('CAMERA_CONFIG', 'CAMERA_INDEX_RIGHT')   # Camera index for the right camera (if using two cameras)
-THRESHOLD_1 = config.getint('DETECTION_CONFIG', 'threshold1_VALUE')/100
-THRESHOLD_2 = config.getint('DETECTION_CONFIG', 'threshold2_VALUE')/100
 CAMERA_CALC_DIAMETER = config.getboolean('CAMERA_CONFIG', 'CAMERA_CALC_DIAMETER')
 CAMERA_HEIGHT = config.getfloat('CAMERA_CONFIG', 'CAMERA_HEIGHT')
 CAMERA_DISTANCE = config.getfloat('CAMERA_CONFIG', 'CAMERA_DISTANCE')
@@ -42,11 +40,11 @@ APPLE_Z = config.getfloat('CAMERA_CONFIG', 'APPLE_Z')
 PIXEL_SEPARATION = config.getfloat('CAMERA_CONFIG', 'PIXEL_SEPARATION')              # Placeholder value for pixel-related separation
 DIAMETER_SEPARATION = config.getfloat('CAMERA_CONFIG', 'DIAMETER_SEPARATION')          # Placeholder value for actual diameter separation (in cm)
 
-DETECTIONMODE_VALUE = config.get('DETECTION_CONFIG', 'DETECTIONMODE_VALUE')  
-CATEGORIZATIONMODE_VALUE = config.get('DETECTION_CONFIG', 'CATEGORIZATIONMODE_VALUE')
+DETECTIONMODE_VALUE = config.getint('DETECTION_CONFIG', 'DETECTIONMODE_VALUE')  
+CATEGORIZATIONMODE_VALUE = config.getint('DETECTION_CONFIG', 'CATEGORIZATIONMODE_VALUE')
 
-if DETECTIONMODE_VALUE == '-1': DETECTIONMODE_VALUE = '0'
-if CATEGORIZATIONMODE_VALUE == '-1': CATEGORIZATIONMODE_VALUE = '0'
+if DETECTIONMODE_VALUE == -1: DETECTIONMODE_VALUE = 0
+if CATEGORIZATIONMODE_VALUE == -1: CATEGORIZATIONMODE_VALUE = 0
 
 #Debug
 cap_left = None
@@ -117,9 +115,11 @@ def determine_apple_type(pixel_caliber, diameter, categorization_confidence):
             return "Small Apple"
 
 # Function to perform apple detection and classification
-def detect_and_classify_apples(frame, type, threshold1, threshold2, calibresult):
+def detect_and_classify_apples(frame, type, detectionmode, categorizationmode, threshold1, threshold2, calibresult):
     THRESHOLD_1 = threshold1
     THRESHOLD_2 = threshold2
+    DETECTIONMODE_VALUE = detectionmode
+    CATEGORIZATIONMODE_VALUE = categorizationmode
 
     apple_boxes = []
     apple_certainties = []
@@ -128,7 +128,7 @@ def detect_and_classify_apples(frame, type, threshold1, threshold2, calibresult)
     
     height, width, _ = frame.shape
 
-    if DETECTIONMODE_VALUE == ('2'):
+    if DETECTIONMODE_VALUE == 2:
         inputframe = frame
         result = customdetection.detect(inputframe, type)
         frame = result[0]
@@ -146,10 +146,9 @@ def detect_and_classify_apples(frame, type, threshold1, threshold2, calibresult)
                 [x+r, y]
             ], dtype=np.float32)
 
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             apple = frame[int(y-r):int(y + r*2), int(x-r):int(x + r*2)]
 
-            if CATEGORIZATIONMODE_VALUE == '0':
+            if CATEGORIZATIONMODE_VALUE == 0:
 
                 if apple.shape[0] > 0 and apple.shape[1] > 0:
                     if apple.shape[0] != 100 or apple.shape[1] != 100:
@@ -219,7 +218,7 @@ def detect_and_classify_apples(frame, type, threshold1, threshold2, calibresult)
         else:
             return frame
 
-    elif DETECTIONMODE_VALUE == ('0' or '1'):
+    elif DETECTIONMODE_VALUE in [0, 1]:
         
         blob = cv2.dnn.blobFromImage(frame, 1/255.0, (416, 416), swapRB=True, crop=False)
         net.setInput(blob)
@@ -371,8 +370,8 @@ def UpdateConfigValues():
     PIXEL_SEPARATION = config.getfloat('CAMERA_CONFIG', 'PIXEL_SEPARATION')              # Placeholder value for pixel-related separation
     DIAMETER_SEPARATION = config.getfloat('CAMERA_CONFIG', 'DIAMETER_SEPARATION')          # Placeholder value for actual diameter separation (in cm)
 
-    DETECTIONMODE_VALUE = config.get('DETECTION_CONFIG', 'DETECTIONMODE_VALUE')  
-    CATEGORIZATIONMODE_VALUE = config.get('DETECTION_CONFIG', 'CATEGORIZATIONMODE_VALUE')   
+    DETECTIONMODE_VALUE = config.getint('DETECTION_CONFIG', 'DETECTIONMODE_VALUE')  
+    CATEGORIZATIONMODE_VALUE = config.getint('DETECTION_CONFIG', 'CATEGORIZATIONMODE_VALUE')   
 
     return USE_TWO_CAMERAS, CAMERA_INDEX_LEFT, CAMERA_INDEX_RIGHT, THRESHOLD_1, THRESHOLD_2, PIXEL_SEPARATION, DIAMETER_SEPARATION, DETECTIONMODE_VALUE, CATEGORIZATIONMODE_VALUE
 
