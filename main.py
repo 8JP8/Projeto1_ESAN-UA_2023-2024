@@ -1620,6 +1620,7 @@ customdetectionfilter.dilate_erode_post_apply = config.getboolean('FILTER_CONFIG
 class SplashScreen(QMainWindow):
     def __init__(self, text="A Carregar: Dependências"):
         super().__init__()
+        self.setWindowIcon(QIcon('ui/icons/apple.ico'))
         self.setStyleSheet("background-color: rgb(255,255,255);")
         self.setWindowFlag(Qt.WindowType.FramelessWindowHint)
 
