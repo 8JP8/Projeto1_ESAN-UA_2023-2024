@@ -11,13 +11,12 @@ import os
 import modules.MathFunctions as MathFunctions
 import modules.CustomDetection as customdetection
 # ============= \\-// =============
-os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 # ============= VARS =============
 
 # Criar objeto de configuração e ler o ficheiro
 config = configparser.ConfigParser()
-config.read('../config.ini')
+config.read('config.ini')
 #output_dir = '../outputs'
 #os.makedirs(output_dir, exist_ok=True)
 
@@ -119,6 +118,7 @@ def detect_and_classify_apples(frame, type, detectionmode, categorizationmode, t
     THRESHOLD_2 = threshold2
     DETECTIONMODE_VALUE = detectionmode
     CATEGORIZATIONMODE_VALUE = categorizationmode
+    categorization_confidence = -1
 
     apple_boxes = []
     apple_certainties = []
@@ -351,7 +351,7 @@ def detect_and_classify_apples(frame, type, detectionmode, categorizationmode, t
 
 
 # Log file setup
-with open("../"+LOG_FILE_PATH, 'w') as log:
+with open(LOG_FILE_PATH, 'w') as log:
     log.write("Timestamp,Type,Diameter\n")
     
 

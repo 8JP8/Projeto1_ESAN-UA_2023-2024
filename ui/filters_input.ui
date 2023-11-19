@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>414</width>
-    <height>565</height>
+    <height>602</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -100,8 +100,14 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="minimumSize">
+        <size>
+         <width>82</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="text">
-        <string>Min Hue     ⠀      </string>
+        <string>Min Hue</string>
        </property>
        <property name="scaledContents">
         <bool>false</bool>
@@ -193,8 +199,14 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="minimumSize">
+        <size>
+         <width>82</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="text">
-        <string>Max Hue            </string>
+        <string>Max Hue</string>
        </property>
       </widget>
      </item>
@@ -283,8 +295,14 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="minimumSize">
+        <size>
+         <width>82</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="text">
-        <string>Min Saturation   </string>
+        <string>Min Saturation</string>
        </property>
       </widget>
      </item>
@@ -373,8 +391,14 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="minimumSize">
+        <size>
+         <width>82</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="text">
-        <string>Max Saturation   </string>
+        <string>Max Saturation</string>
        </property>
       </widget>
      </item>
@@ -463,8 +487,14 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="minimumSize">
+        <size>
+         <width>82</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="text">
-        <string>Min Value   ⠀      </string>
+        <string>Min Value</string>
        </property>
       </widget>
      </item>
@@ -550,8 +580,14 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="minimumSize">
+        <size>
+         <width>82</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="text">
-        <string>Max Value    ⠀    </string>
+        <string>Max Value</string>
        </property>
       </widget>
      </item>
@@ -631,6 +667,102 @@
     </layout>
    </item>
    <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_10">
+     <item>
+      <widget class="QLabel" name="hueaddsub_lb">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>82</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>± Hue</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer_37">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeType">
+        <enum>QSizePolicy::Preferred</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>10</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QSlider" name="hueaddsub_slider">
+       <property name="minimum">
+        <number>-179</number>
+       </property>
+       <property name="maximum">
+        <number>179</number>
+       </property>
+       <property name="value">
+        <number>0</number>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer_38">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeType">
+        <enum>QSizePolicy::Preferred</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>10</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QSpinBox" name="hueaddsub_spinbox">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>47</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="inputMethodHints">
+        <set>Qt::ImhDigitsOnly</set>
+       </property>
+       <property name="minimum">
+        <number>-179</number>
+       </property>
+       <property name="maximum">
+        <number>179</number>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
     <layout class="QHBoxLayout" name="horizontalLayout_7">
      <item>
       <widget class="QLabel" name="addsubsat_lb">
@@ -640,8 +772,14 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="minimumSize">
+        <size>
+         <width>82</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="text">
-        <string>± Saturation      </string>
+        <string>± Saturation</string>
        </property>
       </widget>
      </item>
@@ -730,8 +868,14 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="minimumSize">
+        <size>
+         <width>82</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="text">
-        <string>± Value               </string>
+        <string>± Value</string>
        </property>
       </widget>
      </item>
@@ -820,8 +964,14 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="minimumSize">
+        <size>
+         <width>82</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="text">
-        <string>Blur KernelSize    </string>
+        <string>Blur KernelSize</string>
        </property>
       </widget>
      </item>
@@ -925,8 +1075,14 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="minimumSize">
+        <size>
+         <width>82</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="text">
-        <string>Gaussian Blur     </string>
+        <string>Gaussian Blur</string>
        </property>
       </widget>
      </item>
@@ -940,7 +1096,7 @@
        </property>
        <property name="sizeHint" stdset="0">
         <size>
-         <width>13</width>
+         <width>10</width>
          <height>20</height>
         </size>
        </property>
@@ -975,7 +1131,7 @@
        </property>
        <property name="sizeHint" stdset="0">
         <size>
-         <width>13</width>
+         <width>10</width>
          <height>20</height>
         </size>
        </property>
@@ -1021,8 +1177,14 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="minimumSize">
+        <size>
+         <width>82</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="text">
-        <string>KernelSize            </string>
+        <string>KernelSize</string>
        </property>
       </widget>
      </item>
@@ -1120,8 +1282,14 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="minimumSize">
+        <size>
+         <width>82</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="text">
-        <string>Dilate 1                </string>
+        <string>Dilate 1</string>
        </property>
       </widget>
      </item>
@@ -1135,7 +1303,7 @@
        </property>
        <property name="sizeHint" stdset="0">
         <size>
-         <width>13</width>
+         <width>10</width>
          <height>20</height>
         </size>
        </property>
@@ -1150,7 +1318,10 @@
         <number>1</number>
        </property>
        <property name="maximum">
-        <number>5</number>
+        <number>10</number>
+       </property>
+       <property name="pageStep">
+        <number>1</number>
        </property>
        <property name="value">
         <number>1</number>
@@ -1170,7 +1341,7 @@
        </property>
        <property name="sizeHint" stdset="0">
         <size>
-         <width>13</width>
+         <width>10</width>
          <height>20</height>
         </size>
        </property>
@@ -1200,7 +1371,7 @@
         <number>1</number>
        </property>
        <property name="maximum">
-        <number>5</number>
+        <number>10</number>
        </property>
       </widget>
      </item>
@@ -1216,8 +1387,14 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="minimumSize">
+        <size>
+         <width>82</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="text">
-        <string>Erode 1                 </string>
+        <string>Erode 1</string>
        </property>
       </widget>
      </item>
@@ -1246,7 +1423,10 @@
         <number>1</number>
        </property>
        <property name="maximum">
-        <number>5</number>
+        <number>10</number>
+       </property>
+       <property name="pageStep">
+        <number>1</number>
        </property>
        <property name="value">
         <number>1</number>
@@ -1296,7 +1476,7 @@
         <number>1</number>
        </property>
        <property name="maximum">
-        <number>5</number>
+        <number>10</number>
        </property>
       </widget>
      </item>
@@ -1312,8 +1492,14 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="minimumSize">
+        <size>
+         <width>82</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="text">
-        <string>Dilate 2                 </string>
+        <string>Dilate 2</string>
        </property>
       </widget>
      </item>
@@ -1342,7 +1528,10 @@
         <number>1</number>
        </property>
        <property name="maximum">
-        <number>5</number>
+        <number>10</number>
+       </property>
+       <property name="pageStep">
+        <number>1</number>
        </property>
        <property name="value">
         <number>1</number>
@@ -1392,7 +1581,7 @@
         <number>1</number>
        </property>
        <property name="maximum">
-        <number>5</number>
+        <number>10</number>
        </property>
       </widget>
      </item>
@@ -1408,8 +1597,14 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="minimumSize">
+        <size>
+         <width>82</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="text">
-        <string>Erode 2                 </string>
+        <string>Erode 2</string>
        </property>
       </widget>
      </item>
@@ -1438,7 +1633,10 @@
         <number>1</number>
        </property>
        <property name="maximum">
-        <number>5</number>
+        <number>10</number>
+       </property>
+       <property name="pageStep">
+        <number>1</number>
        </property>
        <property name="value">
         <number>1</number>
@@ -1488,14 +1686,124 @@
         <number>1</number>
        </property>
        <property name="maximum">
-        <number>5</number>
+        <number>10</number>
        </property>
       </widget>
      </item>
     </layout>
    </item>
    <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_16">
+     <item>
+      <widget class="QLabel" name="dilate_erode_apply_lb">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Dilate/Erode</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer_29">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeType">
+        <enum>QSizePolicy::Preferred</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>13</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QRadioButton" name="pre_apply_radiobt">
+       <property name="layoutDirection">
+        <enum>Qt::LeftToRight</enum>
+       </property>
+       <property name="text">
+        <string>Pré-Aplicar</string>
+       </property>
+       <property name="autoRepeat">
+        <bool>false</bool>
+       </property>
+       <property name="autoExclusive">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer_30">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeType">
+        <enum>QSizePolicy::Preferred</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>13</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QRadioButton" name="post_apply_radiobt">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="text">
+        <string>Pós-Aplicar</string>
+       </property>
+       <property name="autoExclusive">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer_31">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeType">
+        <enum>QSizePolicy::Preferred</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>13</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
+   </item>
+   <item>
     <spacer name="verticalSpacer_4">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeType">
+      <enum>QSizePolicy::Preferred</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>4</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item>
+    <spacer name="verticalSpacer_5">
      <property name="orientation">
       <enum>Qt::Vertical</enum>
      </property>

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>414</width>
-    <height>651</height>
+    <height>720</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -100,8 +100,14 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="minimumSize">
+        <size>
+         <width>82</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="text">
-        <string>Min Hue     ⠀      </string>
+        <string>Min Hue</string>
        </property>
        <property name="scaledContents">
         <bool>false</bool>
@@ -193,8 +199,14 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="minimumSize">
+        <size>
+         <width>82</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="text">
-        <string>Max Hue            </string>
+        <string>Max Hue</string>
        </property>
       </widget>
      </item>
@@ -283,8 +295,14 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="minimumSize">
+        <size>
+         <width>82</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="text">
-        <string>Min Saturation   </string>
+        <string>Min Saturation</string>
        </property>
       </widget>
      </item>
@@ -373,8 +391,14 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="minimumSize">
+        <size>
+         <width>82</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="text">
-        <string>Max Saturation   </string>
+        <string>Max Saturation</string>
        </property>
       </widget>
      </item>
@@ -463,8 +487,14 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="minimumSize">
+        <size>
+         <width>82</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="text">
-        <string>Min Value   ⠀      </string>
+        <string>Min Value</string>
        </property>
       </widget>
      </item>
@@ -550,8 +580,14 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="minimumSize">
+        <size>
+         <width>82</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="text">
-        <string>Max Value    ⠀    </string>
+        <string>Max Value</string>
        </property>
       </widget>
      </item>
@@ -631,17 +667,119 @@
     </layout>
    </item>
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_7">
+    <layout class="QHBoxLayout" name="horizontalLayout_10">
      <item>
-      <widget class="QLabel" name="addsubsat_lb">
+      <widget class="QLabel" name="hueaddsub_lb">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="minimumSize">
+        <size>
+         <width>82</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="text">
-        <string>± Saturation      </string>
+        <string>± Hue</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer_37">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeType">
+        <enum>QSizePolicy::Preferred</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>10</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QSlider" name="hueaddsub_slider">
+       <property name="minimum">
+        <number>-179</number>
+       </property>
+       <property name="maximum">
+        <number>179</number>
+       </property>
+       <property name="value">
+        <number>0</number>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer_38">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeType">
+        <enum>QSizePolicy::Preferred</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>10</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QSpinBox" name="hueaddsub_spinbox">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>47</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="inputMethodHints">
+        <set>Qt::ImhDigitsOnly</set>
+       </property>
+       <property name="minimum">
+        <number>-179</number>
+       </property>
+       <property name="maximum">
+        <number>179</number>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_7">
+     <item>
+      <widget class="QLabel" name="sataddsub_lb">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>82</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>± Saturation</string>
        </property>
       </widget>
      </item>
@@ -723,15 +861,21 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_8">
      <item>
-      <widget class="QLabel" name="addsubsat_lb_2">
+      <widget class="QLabel" name="valaddsub_lb">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="minimumSize">
+        <size>
+         <width>82</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="text">
-        <string>± Value               </string>
+        <string>± Value</string>
        </property>
       </widget>
      </item>
@@ -820,8 +964,14 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="minimumSize">
+        <size>
+         <width>82</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="text">
-        <string>Blur KernelSize    </string>
+        <string>Blur KernelSize</string>
        </property>
       </widget>
      </item>
@@ -925,8 +1075,14 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="minimumSize">
+        <size>
+         <width>82</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="text">
-        <string>Gaussian Blur     </string>
+        <string>Gaussian Blur</string>
        </property>
       </widget>
      </item>
@@ -940,7 +1096,7 @@
        </property>
        <property name="sizeHint" stdset="0">
         <size>
-         <width>13</width>
+         <width>10</width>
          <height>20</height>
         </size>
        </property>
@@ -1021,8 +1177,14 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="minimumSize">
+        <size>
+         <width>82</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="text">
-        <string>KernelSize            </string>
+        <string>KernelSize</string>
        </property>
       </widget>
      </item>
@@ -1120,8 +1282,14 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="minimumSize">
+        <size>
+         <width>82</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="text">
-        <string>Canny Dilate      </string>
+        <string>Canny Dilate</string>
        </property>
       </widget>
      </item>
@@ -1135,7 +1303,7 @@
        </property>
        <property name="sizeHint" stdset="0">
         <size>
-         <width>13</width>
+         <width>10</width>
          <height>20</height>
         </size>
        </property>
@@ -1150,7 +1318,10 @@
         <number>1</number>
        </property>
        <property name="maximum">
-        <number>5</number>
+        <number>10</number>
+       </property>
+       <property name="pageStep">
+        <number>1</number>
        </property>
        <property name="value">
         <number>1</number>
@@ -1170,7 +1341,7 @@
        </property>
        <property name="sizeHint" stdset="0">
         <size>
-         <width>13</width>
+         <width>10</width>
          <height>20</height>
         </size>
        </property>
@@ -1200,7 +1371,7 @@
         <number>1</number>
        </property>
        <property name="maximum">
-        <number>5</number>
+        <number>10</number>
        </property>
       </widget>
      </item>
@@ -1216,8 +1387,14 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="minimumSize">
+        <size>
+         <width>82</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="text">
-        <string>Canny Erode        </string>
+        <string>Canny Erode</string>
        </property>
       </widget>
      </item>
@@ -1246,7 +1423,10 @@
         <number>1</number>
        </property>
        <property name="maximum">
-        <number>5</number>
+        <number>10</number>
+       </property>
+       <property name="pageStep">
+        <number>1</number>
        </property>
        <property name="value">
         <number>1</number>
@@ -1296,7 +1476,7 @@
         <number>1</number>
        </property>
        <property name="maximum">
-        <number>5</number>
+        <number>10</number>
        </property>
       </widget>
      </item>
@@ -1312,8 +1492,14 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="minimumSize">
+        <size>
+         <width>82</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="text">
-        <string>Min Canny           </string>
+        <string>Min Canny</string>
        </property>
       </widget>
      </item>
@@ -1408,8 +1594,14 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="minimumSize">
+        <size>
+         <width>82</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="text">
-        <string>Max Canny           </string>
+        <string>Max Canny</string>
        </property>
       </widget>
      </item>
@@ -1504,8 +1696,14 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="minimumSize">
+        <size>
+         <width>82</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="text">
-        <string>Output Dilate       </string>
+        <string>Output Dilate</string>
        </property>
       </widget>
      </item>
@@ -1534,7 +1732,10 @@
         <number>1</number>
        </property>
        <property name="maximum">
-        <number>5</number>
+        <number>10</number>
+       </property>
+       <property name="pageStep">
+        <number>1</number>
        </property>
        <property name="value">
         <number>1</number>
@@ -1584,7 +1785,7 @@
         <number>1</number>
        </property>
        <property name="maximum">
-        <number>5</number>
+        <number>10</number>
        </property>
       </widget>
      </item>
@@ -1600,8 +1801,14 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="minimumSize">
+        <size>
+         <width>82</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="text">
-        <string>Output Erode       </string>
+        <string>Output Erode</string>
        </property>
       </widget>
      </item>
@@ -1630,7 +1837,10 @@
         <number>1</number>
        </property>
        <property name="maximum">
-        <number>5</number>
+        <number>10</number>
+       </property>
+       <property name="pageStep">
+        <number>1</number>
        </property>
        <property name="value">
         <number>1</number>
@@ -1680,7 +1890,7 @@
         <number>1</number>
        </property>
        <property name="maximum">
-        <number>5</number>
+        <number>10</number>
        </property>
       </widget>
      </item>
@@ -1711,7 +1921,7 @@
        </property>
        <property name="sizeHint" stdset="0">
         <size>
-         <width>13</width>
+         <width>15</width>
          <height>20</height>
         </size>
        </property>

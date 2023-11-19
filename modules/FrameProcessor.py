@@ -10,10 +10,9 @@ import modules.code_v1 as code_v1
 import modules.MathFunctions as MathFunctions
 from main import update_config_value
 # ============= \\-// =============
-os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 config = configparser.ConfigParser()
-config.read('../config.ini')  # Replace 'config.ini' with the path to your configuration file
+config.read('config.ini')  # Replace 'config.ini' with the path to your configuration file
 
 currentvideopath = ""
 calibration_inprogress = False
@@ -78,6 +77,7 @@ def ApplyFilters(imageframe, guifvalues):
     hsv = cv2.cvtColor(imageframe, cv2.COLOR_BGR2HSV)
     # add/subtract saturation and value
     h, s, v = cv2.split(hsv)
+    h = shift_channel(h, guifvalues.hue_addsub)
     s = shift_channel(s, guifvalues.sat_addsub)
     v = shift_channel(v, guifvalues.val_addsub)
     hsv = cv2.merge([h, s, v])
@@ -129,9 +129,10 @@ def ApplyFilters(imageframe, guifvalues):
 
     return img
 
-def InputFiltersVisualization(imageframe, guifvalues):
+def ApplyInputFilters(imageframe, guifvalues):
     hsv = cv2.cvtColor(imageframe, cv2.COLOR_BGR2HSV)
     h, s, v = cv2.split(hsv)
+    h = shift_channel(h, guifvalues.hue_addsub)
     s = shift_channel(s, guifvalues.sat_addsub)
     v = shift_channel(v, guifvalues.val_addsub)
     hsv = cv2.merge([h, s, v])
@@ -143,11 +144,14 @@ def InputFiltersVisualization(imageframe, guifvalues):
     kernelsize = (int(guifvalues.blurkernelsize),int(guifvalues.blurkernelsize))
     gaussianblur = cv2.GaussianBlur(result, kernelsize, guifvalues.gaussianblur)
     img = cv2.cvtColor(gaussianblur, cv2.COLOR_HSV2BGR)
-    dilated_image = cv2.dilate(img, kernel, iterations=guifvalues.dilate1)
-    eroded_image = cv2.erode(dilated_image, kernel, iterations=guifvalues.erode1)
-    dilated_image = cv2.dilate(eroded_image, kernel, iterations=guifvalues.dilate2)
-    eroded_image = cv2.erode(dilated_image, kernel, iterations=guifvalues.erode2)
-    return img
+    if guifvalues.dilate_erode_pre_apply:
+        dilated_image = cv2.dilate(img, kernel, iterations=guifvalues.dilate1)
+        eroded_image = cv2.erode(dilated_image, kernel, iterations=guifvalues.erode1)
+        dilated_image = cv2.dilate(eroded_image, kernel, iterations=guifvalues.dilate2)
+        eroded_image = cv2.erode(dilated_image, kernel, iterations=guifvalues.erode2)
+        return eroded_image
+    else:
+        return img
 
 # CAMERA CALIBRATION
 def calibratecamerabool(bool):

@@ -4,6 +4,8 @@ import os
 import argparse
 import configparser
 from ast import literal_eval
+
+config = configparser.ConfigParser()
    
 class Filterobject:
     def __init__(self):
@@ -15,9 +17,7 @@ try:
     from main import customdetectionfilter
     ex = None
 except Exception as ex:
-
-    config = configparser.ConfigParser()
-    config.read('../config.ini')  # Replace 'config.ini' with the path to your configuration file
+    config.read('config.ini')  # Replace 'config.ini' with the path to your configuration file
 
     customdetectionfilter = Filterobject()
     customdetectionfilter.minhue = config.getint('FILTER_CONFIG','inputfilters_min_hue')
@@ -37,13 +37,8 @@ except Exception as ex:
     customdetectionfilter.dilate2 = config.getint('FILTER_CONFIG', 'inputfilters_dilate2')
     # ======================== \\-// ========================
 
-os.chdir(os.path.dirname(os.path.abspath(__file__)))
-
-config = configparser.ConfigParser()
-config.read('../config.ini')  # Replace 'config.ini' with the path to your configuration file
-
 def config_color_ranges():
-    config.read('../config.ini')  # Replace 'config.ini' with the path to your configuration file
+    config.read('config.ini')  # Replace 'config.ini' with the path to your configuration file
     # Defining the color ranges to be filtered.
     low_apple_red = literal_eval(config.get('CUSTOM_DETECTION_CONFIG', 'low_apple_red'))
     high_apple_red = literal_eval(config.get('CUSTOM_DETECTION_CONFIG', 'high_apple_red'))
@@ -86,12 +81,16 @@ def detect(src_img, type):
         mask_green = cv2.inRange(image_hsv, convert_hsv_inputs(color_ranges[6]), convert_hsv_inputs(color_ranges[7]))
         mask = mask_red + mask_red_raw + mask_golden + mask_green
         kernel = np.ones((customdetectionfilter.kernelsize, customdetectionfilter.kernelsize), np.uint8)
-        dilated_image = cv2.dilate(mask, kernel, iterations=customdetectionfilter.dilate1)
-        eroded_image = cv2.erode(dilated_image, kernel, iterations=customdetectionfilter.erode1)
-        dilated2_image = cv2.dilate(eroded_image, kernel, iterations=customdetectionfilter.dilate2)
-        eroded2_image = cv2.erode(dilated2_image, kernel, iterations=customdetectionfilter.erode2)
+        if customdetectionfilter.dilate_erode_post_apply or type == "test_type":
+            dilated_image = cv2.dilate(mask, kernel, iterations=customdetectionfilter.dilate1)
+            eroded_image = cv2.erode(dilated_image, kernel, iterations=customdetectionfilter.erode1)
+            dilated2_image = cv2.dilate(eroded_image, kernel, iterations=customdetectionfilter.dilate2)
+            eroded2_image = cv2.erode(dilated2_image, kernel, iterations=customdetectionfilter.erode2)
+            filteredimage = eroded2_image
+        else:
+            filteredimage = mask
         
-        cnts, _ = cv2.findContours(eroded2_image.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cnts, _ = cv2.findContours(filteredimage.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         c_num = 0
         circles = []
 
@@ -141,7 +140,14 @@ def detect(src_img, type):
             cv2.imshow("Detected Apples", image)
             cv2.imshow("HSV Image", image_hsv)
             cv2.imshow("Mask Image", mask)
-            cv2.imshow("Eroded image", eroded_image)
+            cv2.imshow("Eroded image", filteredimage)
+            '''
+            cv2.imwrite("Original image.png", src_img)
+            cv2.imwrite("Detected Apples.png", image)
+            cv2.imwrite("HSV Image.png", image_hsv)
+            cv2.imwrite("Mask Image.png", mask)
+            cv2.imwrite("Eroded image.png", filteredimage)
+            '''
             cv2.waitKey(0)
         else:
             if ex is not None:

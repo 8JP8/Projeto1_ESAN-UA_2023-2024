@@ -35,15 +35,16 @@ def imports():
     global FrameProcessor, LOG_FILE_PATH  # Make these variables global
     import modules.FrameProcessor as FrameProcessor
     from modules.code_v1 import LOG_FILE_PATH
-    os.chdir(os.path.dirname(os.path.abspath(__file__)))
     loading_splash.loading_label.setText("A Carregar: UI")
     # ============= \\-// =============
 
-class MyApp(QMainWindow):                     #GUI CLASS
+class MyApp(QMainWindow):                     # GUI CLASS
     def __init__(self):                       # CONSTRUCTOR
         super (MyApp, self).__init__()
         loadUi('ui/app.ui', self)
-        app.setWindowIcon(QIcon('ui/icons/apple.ico'))
+        self.icon = QIcon('ui/icons/apple.ico')
+        app.setWindowIcon(self.icon)
+        self.configpath = 'config.ini'
 
         # ============ INICIALIZAÇÃO COM OS VALORES DA CONFIG ============
         self.mode_COMBOBOX.setCurrentIndex(config.getint('DETECTION_CONFIG', 'mode_value'))
@@ -160,7 +161,7 @@ class MyApp(QMainWindow):                     #GUI CLASS
                 # ============= OLD RESIZE CODE TO FIT THE IMAGE ============ →→→→→→→→→→→→  frame = imutils.resize(image, width=self.inputframe_1.width, height=self.inputframe_1.height)
                 #Preview the input filters
                 if DETECTIONMODE == 2:
-                    image = FrameProcessor.InputFiltersVisualization(image, customdetectionfilter)
+                    image = FrameProcessor.ApplyInputFilters(image, customdetectionfilter)
                 # ========= CALCULATIONS TO KEEP IMAGE ASPECT RATIO =========
                 width_scalei = int(self.inputframe_1.width()) / image.shape[1]
                 height_scalei = int(self.inputframe_1.height()) / image.shape[0]
@@ -288,7 +289,7 @@ class MyApp(QMainWindow):                     #GUI CLASS
                 self.progressBar.setValue(int(progress))
                 #Preview the input filters
                 if DETECTIONMODE == 2:
-                    frame = FrameProcessor.InputFiltersVisualization(frame, customdetectionfilter)
+                    frame = FrameProcessor.ApplyInputFilters(frame, customdetectionfilter)
                 # Calculate the scale and apply resizing
                 self.hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
                 frame = cv2.cvtColor(self.hsv, cv2.COLOR_HSV2RGB)
@@ -418,8 +419,8 @@ class MyApp(QMainWindow):                     #GUI CLASS
                         self.show_warning("Erro: Câmara não disponível.")
                     #Preview the input filters
                     if DETECTIONMODE == 2:
-                        frame_left = FrameProcessor.InputFiltersVisualization(frame_left, customdetectionfilter)
-                        frame_right = FrameProcessor.InputFiltersVisualization(frame_right, customdetectionfilter)
+                        frame_left = FrameProcessor.ApplyInputFilters(frame_left, customdetectionfilter)
+                        frame_right = FrameProcessor.ApplyInputFilters(frame_right, customdetectionfilter)
                     # Calculate the scale and apply resizing
                     self.hsv_left = cv2.cvtColor(frame_left, cv2.COLOR_BGR2HSV)
                     frame = cv2.cvtColor(self.hsv_left, cv2.COLOR_HSV2RGB)
@@ -434,7 +435,7 @@ class MyApp(QMainWindow):                     #GUI CLASS
                         self.show_warning("Erro: Câmara não disponível.")
                     #Preview the input filters
                     if DETECTIONMODE == 2:
-                        frame = FrameProcessor.InputFiltersVisualization(frame, customdetectionfilter)
+                        frame = FrameProcessor.ApplyInputFilters(frame, customdetectionfilter)
                     # Calculate the scale and apply resizing
                     self.hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
                     frame = cv2.cvtColor(self.hsv, cv2.COLOR_HSV2RGB)
@@ -813,18 +814,27 @@ class MyApp(QMainWindow):                     #GUI CLASS
         else:
             self.show_error("Erro: OS não suportado.")
     
-    def colorfilters_open(self):    
-        self.colorfilters = ColorFilters()
-        self.colorfilters.show()
-        if self.detectionmode_COMBOBOX.currentIndex() == 2:
-            self.inputfilters = InputFilters()
-            self.inputfilters.show()
+    def colorfilters_open(self):  
+        os.chdir(os.path.dirname(os.path.abspath(__file__))) 
+        try:
+            self.colorfilters = ColorFilters()
+            self.colorfilters.show()
+            if self.detectionmode_COMBOBOX.currentIndex() == 2:
+                self.inputfilters = InputFilters()
+                self.inputfilters.show()
+        except UILoadingException as exp:
+            MyApp.show_error(self, str(exp))
 
     def info_open(self):    
         info_dialog = AboutDialog()
         info_dialog.exec()
 
     def detectionmode_changed(self):
+        try:
+            self.inputfilters = InputFilters()
+            self.inputfilters.close() #close filters if opened
+        except:
+            pass
         if self.detectionmode_COMBOBOX.currentIndex() in [-1, 0, 1]:
             self.threshold1_SLIDER.setValue(config.getint('DETECTION_CONFIG', 'threshold1_value'))
             self.threshold2_SLIDER.setValue(config.getint('DETECTION_CONFIG', 'threshold2_value'))
@@ -835,10 +845,10 @@ class MyApp(QMainWindow):                     #GUI CLASS
     
     def update_config(self):
         global USE_TWO_CAMERAS
-        if config.getint('DETECTION_CONFIG', 'detectionmode_value') in [-1, 0, 1]:
+        if self.detectionmode_COMBOBOX.currentIndex() in [-1, 0, 1]:
             config.set('DETECTION_CONFIG', 'threshold1_value', str(self.threshold1_SLIDER.value()))
             config.set('DETECTION_CONFIG', 'threshold2_value', str(self.threshold2_SLIDER.value()))
-        elif config.getint('DETECTION_CONFIG', 'detectionmode_value') == 2:
+        elif self.detectionmode_COMBOBOX.currentIndex() == 2:
             config.set('CUSTOM_DETECTION_CONFIG', 'threshold1_value', str(self.threshold1_SLIDER.value()))
             config.set('CUSTOM_DETECTION_CONFIG', 'threshold2_value', str(self.threshold2_SLIDER.value()))
         config.set('DETECTION_CONFIG', 'mode_value', str(self.mode_COMBOBOX.currentIndex()))
@@ -854,18 +864,18 @@ class MyApp(QMainWindow):                     #GUI CLASS
     
     # =========================== ALERTS ===========================
     def show_warning(self, msg):
-        self.show_alert("Aviso", msg, QMessageBox.Icon.Warning)
+        MyApp.show_alert(self, "Aviso", msg, QMessageBox.Icon.Warning)
 
     def show_error(self, msg):
-        self.show_alert("Erro", msg, QMessageBox.Icon.Critical)
+        MyApp.show_alert(self, "Erro", msg, QMessageBox.Icon.Critical)
 
     def show_info(self, msg):
-        self.show_alert("Informação", msg, QMessageBox.Icon.Information)
+        MyApp.show_alert(self, "Informação", msg, QMessageBox.Icon.Information)
 
     # ===============================================================
     def show_alert(self, title, msg, icon):
         msg_box = QMessageBox(self)
-        msg_box.setWindowIcon(QIcon('ui/icons/apple.ico'))
+        msg_box.setWindowIcon(self.icon)
         msg_box.setWindowTitle(title)
         msg_box.setText(msg)
         msg_box.setStandardButtons(QMessageBox.StandardButton.Ok)
@@ -912,8 +922,13 @@ class Filter:
 class ColorFilters(QWidget):
     def __init__(self):
         super().__init__()
-        # Load the widget UI file
-        loadUi('ui/filters.ui', self)
+        app.setWindowIcon(QIcon('ui/icons/apple.ico'))
+        #Load UI File
+        try:
+            loadUi(os.path.abspath('ui/filters.ui'), self)
+        except Exception as uiexp:
+            raise UILoadingException("Erro: Falha de carregamento da UI dos filtros, tente novamente.") from uiexp
+            return
         
         screen_center = QGuiApplication.primaryScreen().availableGeometry().center()
         self.move(int(screen_center.x() + 796 / 2), int(screen_center.y() - self.height() / 2))
@@ -929,8 +944,9 @@ class ColorFilters(QWidget):
         self.maxsat_slider.setValue(config.getint('FILTER_CONFIG','max_saturation'))
         self.minval_slider.setValue(config.getint('FILTER_CONFIG','min_value'))
         self.maxval_slider.setValue(config.getint('FILTER_CONFIG','max_value'))
-        self.sataddsub_slider.setValue(config.getint('FILTER_CONFIG','saturation_booster'))
-        self.valaddsub_slider.setValue(config.getint('FILTER_CONFIG','value_booster'))
+        self.hueaddsub_slider.setValue(config.getint('FILTER_CONFIG','hue_modifier'))
+        self.sataddsub_slider.setValue(config.getint('FILTER_CONFIG','saturation_modifier'))
+        self.valaddsub_slider.setValue(config.getint('FILTER_CONFIG','value_modifier'))
         self.blurkernelsize_slider.setValue(config.getint('FILTER_CONFIG','blur_kernelsize'))
         self.gaussianblur_slider.setValue(config.getint('FILTER_CONFIG','gaussian_blur'))
         self.kernelsize_slider.setValue(config.getint('FILTER_CONFIG','kernelsize'))
@@ -947,8 +963,9 @@ class ColorFilters(QWidget):
         self.maxsat_spinbox.setValue(config.getint('FILTER_CONFIG','max_saturation'))
         self.minval_spinbox.setValue(config.getint('FILTER_CONFIG','min_value'))
         self.maxval_spinbox.setValue(config.getint('FILTER_CONFIG','max_value'))
-        self.sataddsub_spinbox.setValue(config.getint('FILTER_CONFIG','saturation_booster'))
-        self.valaddsub_spinbox.setValue(config.getint('FILTER_CONFIG','value_booster'))
+        self.hueaddsub_slider.setValue(config.getint('FILTER_CONFIG','hue_modifier'))
+        self.sataddsub_spinbox.setValue(config.getint('FILTER_CONFIG','saturation_modifier'))
+        self.valaddsub_spinbox.setValue(config.getint('FILTER_CONFIG','value_modifier'))
         self.blurkernelsize_spinbox.setValue(config.getint('FILTER_CONFIG','blur_kernelsize'))
         self.gaussianblur_spinbox.setValue(config.getint('FILTER_CONFIG','gaussian_blur'))
         self.kernelsize_spinbox.setValue(config.getint('FILTER_CONFIG','kernelsize'))
@@ -978,6 +995,7 @@ class ColorFilters(QWidget):
         self.maxhue_slider.valueChanged.connect(self.spinboxupdate)
         self.maxsat_slider.valueChanged.connect(self.spinboxupdate)
         self.maxval_slider.valueChanged.connect(self.spinboxupdate)
+        self.hueaddsub_slider.valueChanged.connect(self.spinboxupdate)
         self.sataddsub_slider.valueChanged.connect(self.spinboxupdate)
         self.valaddsub_slider.valueChanged.connect(self.spinboxupdate)
         self.blurkernelsize_slider.valueChanged.connect(self.spinboxupdate)
@@ -996,6 +1014,7 @@ class ColorFilters(QWidget):
         self.maxhue_spinbox.valueChanged.connect(self.sliderupdate)
         self.maxsat_spinbox.valueChanged.connect(self.sliderupdate)
         self.maxval_spinbox.valueChanged.connect(self.sliderupdate)
+        self.hueaddsub_spinbox.valueChanged.connect(self.sliderupdate)
         self.sataddsub_spinbox.valueChanged.connect(self.sliderupdate)
         self.valaddsub_spinbox.valueChanged.connect(self.sliderupdate)
         self.blurkernelsize_spinbox.valueChanged.connect(self.sliderupdate)
@@ -1017,6 +1036,7 @@ class ColorFilters(QWidget):
         self.maxval_slider.setValue(self.maxval_spinbox.value())
         self.blurkernelsize_slider.setValue(self.blurkernelsize_spinbox.value())
         self.gaussianblur_slider.setValue(self.gaussianblur_spinbox.value())
+        self.hueaddsub_slider.setValue(self.hueaddsub_spinbox.value())
         self.sataddsub_slider.setValue(self.sataddsub_spinbox.value())
         self.valaddsub_slider.setValue(self.valaddsub_spinbox.value())
         self.kernelsize_slider.setValue(self.kernelsize_spinbox.value())
@@ -1038,6 +1058,7 @@ class ColorFilters(QWidget):
         self.maxval_spinbox.setValue(self.maxval_slider.value())
         self.blurkernelsize_spinbox.setValue(self.blurkernelsize_slider.value())
         self.gaussianblur_spinbox.setValue(self.gaussianblur_slider.value())
+        self.hueaddsub_spinbox.setValue(self.hueaddsub_slider.value())
         self.sataddsub_spinbox.setValue(self.sataddsub_slider.value())
         self.valaddsub_spinbox.setValue(self.valaddsub_slider.value())
         self.kernelsize_spinbox.setValue(self.kernelsize_slider.value())
@@ -1086,31 +1107,30 @@ class ColorFilters(QWidget):
         self.spinboxupdate_kernelsize()
         
     def updateconfigfiltervalues(self):
-        config.set('FILTER_CONFIG', 'min_hue', str(self.minhue_slider.value()))
-        config.set('FILTER_CONFIG', 'max_hue', str(self.maxhue_slider.value()))
-        config.set('FILTER_CONFIG', 'min_saturation', str(self.minsat_slider.value()))
-        config.set('FILTER_CONFIG', 'max_saturation', str(self.maxsat_slider.value()))
-        config.set('FILTER_CONFIG', 'min_value', str(self.minval_slider.value()))
-        config.set('FILTER_CONFIG', 'max_value', str(self.maxval_slider.value()))
-        config.set('FILTER_CONFIG', 'blur_kernelsize', str(self.blurkernelsize_slider.value()))
-        config.set('FILTER_CONFIG', 'gaussian_blur', str(self.gaussianblur_slider.value()))
-        config.set('FILTER_CONFIG', 'saturation_booster', str(self.sataddsub_slider.value()))
-        config.set('FILTER_CONFIG', 'value_booster', str(self.valaddsub_slider.value()))
-        config.set('FILTER_CONFIG', 'kernelsize', str(self.kernelsize_slider.value()))
-        config.set('FILTER_CONFIG', 'canny_erode', str(self.cannyerode_slider.value()))
-        config.set('FILTER_CONFIG', 'canny_dilate', str(self.cannydilate_slider.value()))
-        config.set('FILTER_CONFIG', 'canny_1', str(self.canny1_slider.value()))
-        config.set('FILTER_CONFIG', 'canny_2', str(self.canny2_slider.value()))
-        config.set('FILTER_CONFIG', 'canny_edge_enabled', str(self.canny_radiobt.isChecked()))
-        config.set('FILTER_CONFIG', 'sobel_enabled', str(self.sobel_radiobt.isChecked()))
-        config.set('FILTER_CONFIG', 'laplace_enabled', str(self.laplace_radiobt.isChecked()))
-        config.set('FILTER_CONFIG', 'output_erode', str(self.output_erode_slider.value()))
-        config.set('FILTER_CONFIG', 'output_dilate', str(self.output_dilate_slider.value()))
+        update_config_value('FILTER_CONFIG', 'min_hue', str(self.minhue_slider.value()))
+        update_config_value('FILTER_CONFIG', 'max_hue', str(self.maxhue_slider.value()))
+        update_config_value('FILTER_CONFIG', 'min_saturation', str(self.minsat_slider.value()))
+        update_config_value('FILTER_CONFIG', 'max_saturation', str(self.maxsat_slider.value()))
+        update_config_value('FILTER_CONFIG', 'min_value', str(self.minval_slider.value()))
+        update_config_value('FILTER_CONFIG', 'max_value', str(self.maxval_slider.value()))
+        update_config_value('FILTER_CONFIG', 'blur_kernelsize', str(self.blurkernelsize_slider.value()))
+        update_config_value('FILTER_CONFIG', 'gaussian_blur', str(self.gaussianblur_slider.value()))
+        update_config_value('FILTER_CONFIG', 'hue_modifier', str(self.hueaddsub_slider.value()))
+        update_config_value('FILTER_CONFIG', 'saturation_modifier', str(self.sataddsub_slider.value()))
+        update_config_value('FILTER_CONFIG', 'value_modifier', str(self.valaddsub_slider.value()))
+        update_config_value('FILTER_CONFIG', 'kernelsize', str(self.kernelsize_slider.value()))
+        update_config_value('FILTER_CONFIG', 'canny_erode', str(self.cannyerode_slider.value()))
+        update_config_value('FILTER_CONFIG', 'canny_dilate', str(self.cannydilate_slider.value()))
+        update_config_value('FILTER_CONFIG', 'canny_1', str(self.canny1_slider.value()))
+        update_config_value('FILTER_CONFIG', 'canny_2', str(self.canny2_slider.value()))
+        update_config_value('FILTER_CONFIG', 'canny_edge_enabled', str(self.canny_radiobt.isChecked()))
+        update_config_value('FILTER_CONFIG', 'sobel_enabled', str(self.sobel_radiobt.isChecked()))
+        update_config_value('FILTER_CONFIG', 'laplace_enabled', str(self.laplace_radiobt.isChecked()))
+        update_config_value('FILTER_CONFIG', 'output_erode', str(self.output_erode_slider.value()))
+        update_config_value('FILTER_CONFIG', 'output_dilate', str(self.output_dilate_slider.value()))
         self.updatefiltervalues()
+        #self.saveconfigfile(config)
 
-         # Save the changes
-        with open('config.ini', 'w') as config_file:
-            config.write(config_file)
 
     # returns an HSV filter object based on the control GUI values and Canny edge filter object based on the control GUI values
     def updatefiltervalues(self):
@@ -1125,6 +1145,7 @@ class ColorFilters(QWidget):
         filter.maxhue = self.maxhue_slider.value()
         filter.maxsat = self.maxsat_slider.value()
         filter.maxval = self.maxval_slider.value()
+        filter.hue_addsub = self.hueaddsub_slider.value()
         filter.sat_addsub = self.sataddsub_slider.value()
         filter.val_addsub = self.valaddsub_slider.value()
         filter.blurkernelsize = self.blurkernelsize_slider.value()
@@ -1210,8 +1231,10 @@ class ColorFilters(QWidget):
         self.maxsat_slider.setValue(255)
         self.minval_slider.setValue(0)
         self.maxval_slider.setValue(255)
+        self.hueaddsub_slider.setValue(0)
         self.sataddsub_slider.setValue(0)
         self.valaddsub_slider.setValue(0)
+        self.blurkernelsize_slider.setValue(1)
         self.gaussianblur_slider.setValue(0)
         self.kernelsize_slider.setValue(1)
         self.cannyerode_slider.setValue(1)
@@ -1224,15 +1247,35 @@ class ColorFilters(QWidget):
         self.output_erode_slider.setValue(1)
         self.output_dilate_slider.setValue(1)
         self.spinboxupdate()
+        #self.saveconfigfile(config)
+
+    def saveconfigfile(self, config):
+        if os.getcwd().endswith('modules'):
+            cfgpath = '../config.ini'
+        else:
+            cfgpath = 'config.ini'
+         # Save the changes
+        with open(cfgpath, 'w') as config_file:
+            config.write(config_file)
+        
     
     def close_widget(self):
         self.close()
+
+class UILoadingException(Exception):
+    def __init__(self, message="Failed to load UI"):
+        self.message = message
+        super().__init__(self.message)
 
 class InputFilters(QWidget):
     def __init__(self):
         super().__init__()
         # Load the widget UI file
-        loadUi('ui/filters_input.ui', self)
+        try:
+            loadUi(os.path.abspath('ui/filters_input.ui'), self)
+        except Exception as uiexp:
+            raise UILoadingException("Erro: Falha de carregamento da UI, tente novamente.") from uiexp
+            return
 
         screen_center = QGuiApplication.primaryScreen().availableGeometry().center()
         self.move(int(screen_center.x() -1622 / 2), int(screen_center.y() - self.height() / 2))
@@ -1244,8 +1287,9 @@ class InputFilters(QWidget):
         self.maxsat_slider.setValue(config.getint('FILTER_CONFIG','inputfilters_max_saturation'))
         self.minval_slider.setValue(config.getint('FILTER_CONFIG','inputfilters_min_value'))
         self.maxval_slider.setValue(config.getint('FILTER_CONFIG','inputfilters_max_value'))
-        self.sataddsub_slider.setValue(config.getint('FILTER_CONFIG','inputfilters_saturation_booster'))
-        self.valaddsub_slider.setValue(config.getint('FILTER_CONFIG','inputfilters_value_booster'))
+        self.hueaddsub_slider.setValue(config.getint('FILTER_CONFIG','inputfilters_hue_modifier'))
+        self.sataddsub_slider.setValue(config.getint('FILTER_CONFIG','inputfilters_saturation_modifier'))
+        self.valaddsub_slider.setValue(config.getint('FILTER_CONFIG','inputfilters_value_modifier'))
         self.blurkernelsize_slider.setValue(config.getint('FILTER_CONFIG','inputfilters_blur_kernelsize'))
         self.gaussianblur_slider.setValue(config.getint('FILTER_CONFIG','inputfilters_gaussian_blur'))
         self.kernelsize_slider.setValue(config.getint('FILTER_CONFIG','inputfilters_kernelsize'))
@@ -1260,8 +1304,9 @@ class InputFilters(QWidget):
         self.maxsat_spinbox.setValue(config.getint('FILTER_CONFIG','inputfilters_max_saturation'))
         self.minval_spinbox.setValue(config.getint('FILTER_CONFIG','inputfilters_min_value'))
         self.maxval_spinbox.setValue(config.getint('FILTER_CONFIG','inputfilters_max_value'))
-        self.sataddsub_spinbox.setValue(config.getint('FILTER_CONFIG','inputfilters_saturation_booster'))
-        self.valaddsub_spinbox.setValue(config.getint('FILTER_CONFIG','inputfilters_value_booster'))
+        self.hueaddsub_spinbox.setValue(config.getint('FILTER_CONFIG','inputfilters_hue_modifier'))
+        self.sataddsub_spinbox.setValue(config.getint('FILTER_CONFIG','inputfilters_saturation_modifier'))
+        self.valaddsub_spinbox.setValue(config.getint('FILTER_CONFIG','inputfilters_value_modifier'))
         self.blurkernelsize_spinbox.setValue(config.getint('FILTER_CONFIG','inputfilters_blur_kernelsize'))
         self.gaussianblur_spinbox.setValue(config.getint('FILTER_CONFIG','inputfilters_gaussian_blur'))
         self.kernelsize_spinbox.setValue(config.getint('FILTER_CONFIG','inputfilters_kernelsize'))
@@ -1270,11 +1315,16 @@ class InputFilters(QWidget):
         self.erode2_spinbox.setValue(config.getint('FILTER_CONFIG','inputfilters_erode2'))
         self.dilate2_spinbox.setValue(config.getint('FILTER_CONFIG','inputfilters_dilate2'))
 
+        self.pre_apply_radiobt.setChecked(config.getboolean('FILTER_CONFIG', 'inputfilters_pre-apply_dilate_and_erode'))
+        self.post_apply_radiobt.setChecked(config.getboolean('FILTER_CONFIG', 'inputfilters_post-apply_dilate_and_erode'))
+
         self.updateinputfiltervalues()
 
         # Refresh when Changed
         self.reset_bt.clicked.connect(self.reset_values)
         self.close_bt.clicked.connect(self.close_widget)
+        self.pre_apply_radiobt.toggled.connect(self.updateconfigfiltervalues)
+        self.post_apply_radiobt.toggled.connect(self.updateconfigfiltervalues)
 
         self.minhue_slider.valueChanged.connect(self.spinboxupdate)
         self.minsat_slider.valueChanged.connect(self.spinboxupdate)
@@ -1282,6 +1332,7 @@ class InputFilters(QWidget):
         self.maxhue_slider.valueChanged.connect(self.spinboxupdate)
         self.maxsat_slider.valueChanged.connect(self.spinboxupdate)
         self.maxval_slider.valueChanged.connect(self.spinboxupdate)
+        self.hueaddsub_slider.valueChanged.connect(self.spinboxupdate)
         self.sataddsub_slider.valueChanged.connect(self.spinboxupdate)
         self.valaddsub_slider.valueChanged.connect(self.spinboxupdate)
         self.blurkernelsize_slider.valueChanged.connect(self.spinboxupdate)
@@ -1298,6 +1349,7 @@ class InputFilters(QWidget):
         self.maxhue_spinbox.valueChanged.connect(self.sliderupdate)
         self.maxsat_spinbox.valueChanged.connect(self.sliderupdate)
         self.maxval_spinbox.valueChanged.connect(self.sliderupdate)
+        self.hueaddsub_spinbox.valueChanged.connect(self.sliderupdate)
         self.sataddsub_spinbox.valueChanged.connect(self.sliderupdate)
         self.valaddsub_spinbox.valueChanged.connect(self.sliderupdate)
         self.blurkernelsize_spinbox.valueChanged.connect(self.sliderupdate)
@@ -1317,6 +1369,7 @@ class InputFilters(QWidget):
         self.maxval_slider.setValue(self.maxval_spinbox.value())
         self.blurkernelsize_slider.setValue(self.blurkernelsize_spinbox.value())
         self.gaussianblur_slider.setValue(self.gaussianblur_spinbox.value())
+        self.hueaddsub_slider.setValue(self.hueaddsub_spinbox.value())
         self.sataddsub_slider.setValue(self.sataddsub_spinbox.value())
         self.valaddsub_slider.setValue(self.valaddsub_spinbox.value())
         self.kernelsize_slider.setValue(self.kernelsize_spinbox.value())
@@ -1336,6 +1389,7 @@ class InputFilters(QWidget):
         self.maxval_spinbox.setValue(self.maxval_slider.value())
         self.blurkernelsize_spinbox.setValue(self.blurkernelsize_slider.value())
         self.gaussianblur_spinbox.setValue(self.gaussianblur_slider.value())
+        self.hueaddsub_spinbox.setValue(self.hueaddsub_slider.value())
         self.sataddsub_spinbox.setValue(self.sataddsub_slider.value())
         self.valaddsub_spinbox.setValue(self.valaddsub_slider.value())
         self.kernelsize_spinbox.setValue(self.kernelsize_slider.value())
@@ -1360,22 +1414,27 @@ class InputFilters(QWidget):
 
         
     def updateconfigfiltervalues(self):
-        config.set('FILTER_CONFIG', 'inputfilters_min_hue', str(self.minhue_slider.value()))
-        config.set('FILTER_CONFIG', 'inputfilters_max_hue', str(self.maxhue_slider.value()))
-        config.set('FILTER_CONFIG', 'inputfilters_min_saturation', str(self.minsat_slider.value()))
-        config.set('FILTER_CONFIG', 'inputfilters_max_saturation', str(self.maxsat_slider.value()))
-        config.set('FILTER_CONFIG', 'inputfilters_min_value', str(self.minval_slider.value()))
-        config.set('FILTER_CONFIG', 'inputfilters_max_value', str(self.maxval_slider.value()))
-        config.set('FILTER_CONFIG', 'inputfilters_blur_kernelsize', str(self.blurkernelsize_slider.value()))
-        config.set('FILTER_CONFIG', 'inputfilters_gaussian_blur', str(self.gaussianblur_slider.value()))
-        config.set('FILTER_CONFIG', 'inputfilters_saturation_booster', str(self.sataddsub_slider.value()))
-        config.set('FILTER_CONFIG', 'inputfilters_value_booster', str(self.valaddsub_slider.value()))
-        config.set('FILTER_CONFIG', 'inputfilters_kernelsize', str(self.kernelsize_slider.value()))
-        config.set('FILTER_CONFIG', 'inputfilters_erode1', str(self.erode2_slider.value()))
-        config.set('FILTER_CONFIG', 'inputfilters_dilate1', str(self.dilate2_slider.value()))
-        config.set('FILTER_CONFIG', 'inputfilters_erode2', str(self.erode2_slider.value()))
-        config.set('FILTER_CONFIG', 'inputfilters_dilate2', str(self.dilate2_slider.value()))
+        update_config_value('FILTER_CONFIG', 'inputfilters_min_hue', str(self.minhue_slider.value()))
+        update_config_value('FILTER_CONFIG', 'inputfilters_max_hue', str(self.maxhue_slider.value()))
+        update_config_value('FILTER_CONFIG', 'inputfilters_min_saturation', str(self.minsat_slider.value()))
+        update_config_value('FILTER_CONFIG', 'inputfilters_max_saturation', str(self.maxsat_slider.value()))
+        update_config_value('FILTER_CONFIG', 'inputfilters_min_value', str(self.minval_slider.value()))
+        update_config_value('FILTER_CONFIG', 'inputfilters_max_value', str(self.maxval_slider.value()))
+        update_config_value('FILTER_CONFIG', 'inputfilters_blur_kernelsize', str(self.blurkernelsize_slider.value()))
+        update_config_value('FILTER_CONFIG', 'inputfilters_gaussian_blur', str(self.gaussianblur_slider.value()))
+        update_config_value('FILTER_CONFIG', 'inputfilters_hue_modifier', str(self.hueaddsub_slider.value()))
+        update_config_value('FILTER_CONFIG', 'inputfilters_saturation_modifier', str(self.sataddsub_slider.value()))
+        update_config_value('FILTER_CONFIG', 'inputfilters_value_modifier', str(self.valaddsub_slider.value()))
+        update_config_value('FILTER_CONFIG', 'inputfilters_kernelsize', str(self.kernelsize_slider.value()))
+        update_config_value('FILTER_CONFIG', 'inputfilters_erode1', str(self.erode2_slider.value()))
+        update_config_value('FILTER_CONFIG', 'inputfilters_dilate1', str(self.dilate2_slider.value()))
+        update_config_value('FILTER_CONFIG', 'inputfilters_erode2', str(self.erode2_slider.value()))
+        update_config_value('FILTER_CONFIG', 'inputfilters_dilate2', str(self.dilate2_slider.value()))
+        update_config_value('FILTER_CONFIG', 'inputfilters_pre-apply_dilate_and_erode', str(self.pre_apply_radiobt.isChecked()))
+        update_config_value('FILTER_CONFIG', 'inputfilters_post-apply_dilate_and_erode', str(self.post_apply_radiobt.isChecked()))
         self.updateinputfiltervalues()
+        #self.saveconfigfile(config)
+
 
     def reset_values(self):
         self.minhue_slider.setValue(0)
@@ -1384,22 +1443,30 @@ class InputFilters(QWidget):
         self.maxsat_slider.setValue(255)
         self.minval_slider.setValue(0)
         self.maxval_slider.setValue(255)
+        self.hueaddsub_slider.setValue(0)
         self.sataddsub_slider.setValue(0)
         self.valaddsub_slider.setValue(0)
         self.gaussianblur_slider.setValue(0)
+        self.blurkernelsize_slider.setValue(0)
         self.kernelsize_slider.setValue(1)
         self.erode1_slider.setValue(1)
         self.dilate1_slider.setValue(1)
         self.erode2_slider.setValue(1)
         self.dilate2_slider.setValue(1)
+        self.pre_apply_radiobt.setChecked(False)
+        self.post_apply_radiobt.setChecked(True)
         self.spinboxupdate()
+        #self.saveconfigfile(config)
+        
 
+    def saveconfigfile(self, config):
+        cfgpath = 'config.ini'
          # Save the changes
-        with open('config.ini', 'w') as config_file:
+        with open(cfgpath, 'w') as config_file:
             config.write(config_file)
         
     def updateinputfiltervalues(self):
-        config.read('../config.ini')  # Replace 'config.ini' with the path to your configuration file
+        config.read('config.ini')  # Replace 'config.ini' with the path to your configuration file
         global customdetectionfilter
         customdetectionfilter = Filter()
         customdetectionfilter.minhue = self.minhue_slider.value()
@@ -1408,6 +1475,7 @@ class InputFilters(QWidget):
         customdetectionfilter.maxhue = self.maxhue_slider.value()
         customdetectionfilter.maxsat = self.maxsat_slider.value()
         customdetectionfilter.maxval = self.maxval_slider.value()
+        customdetectionfilter.hue_addsub = self.hueaddsub_slider.value()
         customdetectionfilter.sat_addsub = self.sataddsub_slider.value()
         customdetectionfilter.val_addsub = self.valaddsub_slider.value()
         customdetectionfilter.blurkernelsize = self.blurkernelsize_slider.value()
@@ -1417,6 +1485,8 @@ class InputFilters(QWidget):
         customdetectionfilter.dilate1 = self.dilate1_slider.value()
         customdetectionfilter.erode2 = self.erode2_slider.value()
         customdetectionfilter.dilate2 = self.dilate2_slider.value()
+        customdetectionfilter.dilate_erode_pre_apply = self.pre_apply_radiobt.isChecked()
+        customdetectionfilter.dilate_erode_post_apply = self.post_apply_radiobt.isChecked()
 
         return customdetectionfilter
     
@@ -1451,7 +1521,7 @@ class AboutDialog(QDialog):
         description_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # Add a paragraph to explain the keys
-        keys_title = QLabel("<b>- Atalhos de Teclado:</b>")
+        keys_title = QLabel("<b>– Atalhos de Teclado:</b>")
         keys_paragraph = QLabel(
             "Iniciar/Parar - I ou P\n"
             "Congelar Frame - C\n"
@@ -1507,8 +1577,9 @@ filter.minsat = config.getint('FILTER_CONFIG','min_saturation')
 filter.maxsat = config.getint('FILTER_CONFIG','max_saturation')
 filter.minval = config.getint('FILTER_CONFIG','min_value')
 filter.maxval = config.getint('FILTER_CONFIG','max_value')
-filter.sat_addsub = config.getint('FILTER_CONFIG','saturation_booster')
-filter.val_addsub = config.getint('FILTER_CONFIG','value_booster')
+filter.hue_addsub = config.getint('FILTER_CONFIG','hue_modifier')
+filter.sat_addsub = config.getint('FILTER_CONFIG','saturation_modifier')
+filter.val_addsub = config.getint('FILTER_CONFIG','value_modifier')
 filter.gaussianblur = config.getint('FILTER_CONFIG','gaussian_blur')
 filter.blurkernelsize = config.getint('FILTER_CONFIG', 'blur_kernelsize')
 filter.kernelsize = config.getint('FILTER_CONFIG','kernelsize')
@@ -1531,8 +1602,9 @@ customdetectionfilter.minsat = config.getint('FILTER_CONFIG','inputfilters_min_s
 customdetectionfilter.maxsat = config.getint('FILTER_CONFIG','inputfilters_max_saturation')
 customdetectionfilter.minval = config.getint('FILTER_CONFIG','inputfilters_min_value')
 customdetectionfilter.maxval = config.getint('FILTER_CONFIG','inputfilters_max_value')
-customdetectionfilter.sat_addsub = config.getint('FILTER_CONFIG','inputfilters_saturation_booster')
-customdetectionfilter.val_addsub = config.getint('FILTER_CONFIG','inputfilters_value_booster')
+customdetectionfilter.hue_addsub = config.getint('FILTER_CONFIG','inputfilters_hue_modifier')
+customdetectionfilter.sat_addsub = config.getint('FILTER_CONFIG','inputfilters_saturation_modifier')
+customdetectionfilter.val_addsub = config.getint('FILTER_CONFIG','inputfilters_value_modifier')
 customdetectionfilter.gaussianblur = config.getint('FILTER_CONFIG','inputfilters_gaussian_blur')
 customdetectionfilter.blurkernelsize = config.getint('FILTER_CONFIG', 'inputfilters_blur_kernelsize')
 customdetectionfilter.kernelsize = config.getint('FILTER_CONFIG','inputfilters_kernelsize')
@@ -1540,6 +1612,8 @@ customdetectionfilter.erode1 = config.getint('FILTER_CONFIG','inputfilters_erode
 customdetectionfilter.dilate1 = config.getint('FILTER_CONFIG','inputfilters_dilate1')
 customdetectionfilter.erode2 = config.getint('FILTER_CONFIG', 'inputfilters_erode2')
 customdetectionfilter.dilate2 = config.getint('FILTER_CONFIG', 'inputfilters_dilate2')
+customdetectionfilter.dilate_erode_pre_apply = config.getboolean('FILTER_CONFIG', 'inputfilters_pre-apply_dilate_and_erode')
+customdetectionfilter.dilate_erode_post_apply = config.getboolean('FILTER_CONFIG', 'inputfilters_post-apply_dilate_and_erode')
 # ======================== \\-// ========================
 
 # SplashScreen class

@@ -65,7 +65,7 @@
     <widget class="QRadioButton" name="cam1_RADIOBT">
      <property name="geometry">
       <rect>
-       <x>555</x>
+       <x>560</x>
        <y>35</y>
        <width>71</width>
        <height>21</height>
@@ -84,7 +84,7 @@
      </property>
      <property name="geometry">
       <rect>
-       <x>555</x>
+       <x>560</x>
        <y>57</y>
        <width>81</width>
        <height>21</height>
@@ -317,14 +317,14 @@
     <widget class="QPushButton" name="colorfilters_BT">
      <property name="geometry">
       <rect>
-       <x>571</x>
+       <x>551</x>
        <y>7</y>
-       <width>71</width>
+       <width>91</width>
        <height>23</height>
       </rect>
      </property>
      <property name="text">
-      <string>Filtros</string>
+      <string>Filtros (F)</string>
      </property>
      <property name="icon">
       <iconset>
