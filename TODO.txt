@@ -3,7 +3,6 @@ Trabalho a Fazer:
 Seguimento de Trabalho:
 ❎- Testar com 2 Câmaras
 ❇️- Usar Visão da Câmara para estimar a largura das maçãs (VERIFICAÇÃO)
-❇️- Meter deteção customizada (MAÇÃS VERDES)
 ❇️- Detetar se está danificada (ADICIONAR a categorização customizada)
 
 Curto Prazo / Prioritário:
