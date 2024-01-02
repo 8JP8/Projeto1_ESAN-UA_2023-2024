@@ -19,15 +19,19 @@ This application is designed for quality control of apples, utilizing detection 
 ### Usage
 1. Install Python from [Python Official Website](https://www.python.org/downloads/).
 
-2. Install the required dependencies using the following command:
-`pip install numpy opencv-python pyqt6 configmanager`
+2. Install the required dependencies using the following command in commandline:
+```
+pip install numpy opencv-python pyqt6 configmanager
+```
 
 3. Run the application using the command:
-`python main.py`
+```
+python python main.py
+```
 
 4. Follow the on-screen instructions to input apples for quality control, and view the results.
 
-5. Alternatively, you can use the precompiled executable version of the application available in the [AppleCategorizationApp_EXE.zip](https://github.com/8JP8/Projeto1_ESAN-UA_2023-2024/releases/download/V1.6/AppleCategorizationApp_EXE.zip) file.
+5. Alternatively, you can use the precompiled executable version of the application available in the [AppleCategorizationApp_EXE.zip](https://github.com/8JP8/Projeto1_ESAN-UA_2023-2024/releases/download/V1.6/AppleCategorizationApp_EXE.zip).
 
 ## Português
 
@@ -48,12 +52,16 @@ Esta aplicação é projetada para o controle de qualidade de maçãs, utilizand
 ### Utilização
 1. Instale o Python a partir do [site oficial do Python](https://www.python.org/downloads/).
 
-2. Instale as dependências necessárias usando o seguinte comando:
-`pip install numpy opencv-python pyqt6 configmanager`
+2. Instale as dependências necessárias usando o seguinte comando no terminal:
+```
+pip install numpy opencv-python pyqt6 configmanager
+```
 
-3. Execute a aplicação com o comando:
-`python main.py`
+4. Execute a aplicação com o comando:
+```
+python main.py
+```
 
-4. Siga as instruções na tela para inserir maçãs para controle de qualidade e visualize os resultados.
+6. Siga as instruções na tela para inserir maçãs para controle de qualidade e visualize os resultados.
 
-5. Alternativamente, você pode usar a versão executável pré-compilada do aplicativo disponível no arquivo [AppleCategorizationApp_EXE.zip](https://github.com/8JP8/Projeto1_ESAN-UA_2023-2024/releases/download/V1.6/AppleCategorizationApp_EXE.zip).
+7. Alternativamente, você pode usar a versão executável pré-compilada do aplicativo disponível no arquivo [AppleCategorizationApp_EXE.zip](https://github.com/8JP8/Projeto1_ESAN-UA_2023-2024/releases/download/V1.6/AppleCategorizationApp_EXE.zip).
