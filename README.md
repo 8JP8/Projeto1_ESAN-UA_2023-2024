@@ -19,7 +19,7 @@ This application is designed for quality control of apples, utilizing detection 
 ### Usage
 1. Install Python from [Python Official Website](https://www.python.org/downloads/).
 
-2. Install the required dependencies using the following command in commandline:
+2. Install the required dependencies using the following command:
 ```
 pip install numpy opencv-python keras pyqt6 configmanager
 ```
@@ -55,7 +55,7 @@ Esta aplicação é projetada para o controle de qualidade de maçãs, utilizand
 ### Utilização
 1. Instale o Python a partir do [site oficial do Python](https://www.python.org/downloads/).
 
-2. Instale as dependências necessárias usando o seguinte comando no terminal:
+2. Instale as dependências necessárias usando o seguinte comando:
 ```
 pip install numpy opencv-python keras pyqt6 configmanager
 ```
