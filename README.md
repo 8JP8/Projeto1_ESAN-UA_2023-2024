@@ -1,7 +1,5 @@
 # Apple Quality Control Application
 
-## English
-
 ### Overview
 This application is designed for quality control of apples, utilizing detection and subsequent sorting based on size and condition (Large/Small/Defective). It detects apples either by color or alternatively by object detection using a YOLO model trained with the COCO dataset. It further classifies apples as defective using a pre-trained KERAS model with a dataset of both rotten and good apples.
 
@@ -37,8 +35,6 @@ python python main.py
 
 ---
 # Aplicação de Controlo de Qualidade de Maçãs
-
-## Português
 
 ### Visão Geral
 Esta aplicação é projetada para o controle de qualidade de maçãs, utilizando a detecção e subsequente classificação com base no tamanho e estado (Grande/Pequena/Defeituosa). Ela detecta maçãs pela cor ou, alternativamente, pela detecção de objetos usando um modelo YOLO treinado com o conjunto de dados COCO. Além disso, classifica as maçãs como defeituosas usando um modelo KERAS pré-treinado com um conjunto de dados de maçãs podres e boas.
