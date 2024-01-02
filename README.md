@@ -34,7 +34,8 @@ python python main.py
 4. Follow the on-screen instructions to input apples for quality control, and view the results.
 
 5. Alternatively, you can use the precompiled executable version of the application available in the [AppleCategorizationApp_EXE.zip](https://github.com/8JP8/Projeto1_ESAN-UA_2023-2024/releases/download/V1.6/AppleCategorizationApp_EXE.zip).
-#
+
+#-----------------------------------------------------
 
 
 ## Português
