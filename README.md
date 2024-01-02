@@ -60,11 +60,11 @@ Esta aplicação é projetada para o controle de qualidade de maçãs, utilizand
 pip install numpy opencv-python keras pyqt6 configmanager
 ```
 
-4. Execute a aplicação com o comando:
+3. Execute a aplicação com o comando:
 ```
 python main.py
 ```
 
-6. Siga as instruções na tela para inserir maçãs para controle de qualidade e visualize os resultados.
+4. Siga as instruções na tela para inserir maçãs para controle de qualidade e visualize os resultados.
 
-7. Alternativamente, você pode usar a versão executável pré-compilada do aplicativo disponível no arquivo [AppleCategorizationApp_EXE.zip](https://github.com/8JP8/Projeto1_ESAN-UA_2023-2024/releases/download/V1.6/AppleCategorizationApp_EXE.zip).
+5. Alternativamente, você pode usar a versão executável pré-compilada do aplicativo disponível no arquivo [AppleCategorizationApp_EXE.zip](https://github.com/8JP8/Projeto1_ESAN-UA_2023-2024/releases/download/V1.6/AppleCategorizationApp_EXE.zip).
