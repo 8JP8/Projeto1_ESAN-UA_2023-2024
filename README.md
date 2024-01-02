@@ -8,11 +8,13 @@ This application is designed for quality control of apples, utilizing detection 
 ### Technologies Used
 - Python
 - OpenCV
+- Keras
 - PyQt6
 
 ### Dependencies
 - Numpy
 - opencv-python
+- keras
 - pyqt6
 - configmanager
 
@@ -21,7 +23,7 @@ This application is designed for quality control of apples, utilizing detection 
 
 2. Install the required dependencies using the following command in commandline:
 ```
-pip install numpy opencv-python pyqt6 configmanager
+pip install numpy opencv-python keras pyqt6 configmanager
 ```
 
 3. Run the application using the command:
@@ -41,11 +43,13 @@ Esta aplicação é projetada para o controle de qualidade de maçãs, utilizand
 ### Tecnologias Utilizadas
 - Python
 - OpenCV
+- Keras
 - PyQt6
 
 ### Dependências
 - Numpy
 - opencv-python
+- keras
 - pyqt6
 - configmanager
 
@@ -54,7 +58,7 @@ Esta aplicação é projetada para o controle de qualidade de maçãs, utilizand
 
 2. Instale as dependências necessárias usando o seguinte comando no terminal:
 ```
-pip install numpy opencv-python pyqt6 configmanager
+pip install numpy opencv-python keras pyqt6 configmanager
 ```
 
 4. Execute a aplicação com o comando:
