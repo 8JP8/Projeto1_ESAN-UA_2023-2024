@@ -8,6 +8,7 @@ This application is designed for quality control of apples, utilizing detection 
 - OpenCV
 - Keras
 - PyQt6
+- Pyserial
 
 ### Dependencies
 - Numpy
@@ -15,13 +16,14 @@ This application is designed for quality control of apples, utilizing detection 
 - keras
 - pyqt6
 - configmanager
+- pyserial
 
 ### Usage
 1. Install Python from [Python Official Website](https://www.python.org/downloads/).
 
 2. Install the required dependencies using the following command:
 ```
-pip install numpy opencv-python keras pyqt6 configmanager
+pip install numpy opencv-python keras pyqt6 configmanager pyserial
 ```
 
 3. Run the application using the command:
@@ -44,6 +46,7 @@ Esta aplicação é projetada para o controle de qualidade de maçãs, utilizand
 - OpenCV
 - Keras
 - PyQt6
+- Pyserial
 
 ### Dependências
 - Numpy
@@ -51,13 +54,14 @@ Esta aplicação é projetada para o controle de qualidade de maçãs, utilizand
 - keras
 - pyqt6
 - configmanager
+- pyserial
 
 ### Utilização
 1. Instale o Python a partir do [site oficial do Python](https://www.python.org/downloads/).
 
 2. Instale as dependências necessárias usando o seguinte comando:
 ```
-pip install numpy opencv-python keras pyqt6 configmanager
+pip install numpy opencv-python keras pyqt6 configmanager pyserial
 ```
 
 3. Execute a aplicação com o comando:
