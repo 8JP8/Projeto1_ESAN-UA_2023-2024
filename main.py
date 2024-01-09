@@ -83,7 +83,7 @@ class MyApp(QMainWindow):                     # GUI CLASS
         self.action_operatorview.triggered.connect(self.operator_vw)
         self.action_small_view.setShortcut("Ctrl+Left")
         self.action_big_view.setShortcut("Ctrl+Right")
-        self.action_operatorview.setShortcut("Ctrl+End")
+        self.action_operatorview.setShortcuts([QKeySequence.fromString("Ctrl+End"), QKeySequence.fromString("Ctrl+1")])
         self.action_calibratecamera.triggered.connect(self.calibratecamera)
         self.action_calibratecamera.setShortcut("Ctrl+Shift+C")
         self.action_restartprogram.triggered.connect(self.restartprogram)
@@ -428,7 +428,7 @@ class MyApp(QMainWindow):                     # GUI CLASS
         self.FalsePositives_TextEdit.setHtml(f"<div align='center'>{false_positives}</div>")
         self.AverageDiameter_TextEdit.setHtml(f"<div align='center'>{average_diameter}</div>")
 
-        print("updated")
+        #print("updated")
         #Updates with LogFile
         try:
             with open(LOG_FILE_PATH, 'r') as file:
@@ -459,7 +459,6 @@ class MyApp(QMainWindow):                     # GUI CLASS
                 except:
                     self.show_error(f"Erro: Foi atingido o tempo limite de resposta do Microcontrolador\nVerifique se está conectado e o endereço da porta é o {MICROCONTROLLER_PORT}.")
 
-            WorkerThread.stop_thread()
         else:
             #LED Control
             defaultbrightness = config.getint("IO_CONFIG", "light_default_intensity")
@@ -1098,10 +1097,6 @@ class WorkerThread(QThread):
             # Update UI with the current values
             self.update_signal.emit(self.false_positives, self.average_diameter)
             self.sleep(100)  # Simulate some processing time
-
-    def stop_thread(self):
-        # Emit the stop signal to request thread termination
-        self.stop_signal.emit()
 
 # =========================== \\---// ===========================
 class Filter:
