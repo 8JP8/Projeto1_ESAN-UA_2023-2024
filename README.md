@@ -28,7 +28,7 @@ pip install numpy opencv-python keras pyqt6 configmanager pyserial
 
 3. Run the application using the command:
 ```
-python python main.py
+python main.py
 ```
 
 4. Follow the on-screen instructions to input apples for quality control, and view the results.
