@@ -4,7 +4,7 @@
 This application is designed for quality control of apples, utilizing detection and subsequent sorting based on size and condition (Large/Small/Defective). It detects apples either by color or alternatively by object detection using a YOLO model trained with the COCO dataset. It further classifies apples as defective using a pre-trained KERAS model with a dataset of both rotten and good apples.
 
 ### Technologies Used
-- Python
+- Python 3.10
 - OpenCV
 - Keras
 - PyQt6
