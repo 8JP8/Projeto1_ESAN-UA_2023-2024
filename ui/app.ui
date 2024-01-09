@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>771</width>
-    <height>366</height>
+    <height>586</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -80,7 +80,7 @@
     </widget>
     <widget class="QRadioButton" name="cam2_RADIOBT">
      <property name="enabled">
-      <bool>false</bool>
+      <bool>true</bool>
      </property>
      <property name="geometry">
       <rect>
@@ -367,7 +367,7 @@
      <string notr="true"/>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>2</number>
     </property>
     <widget class="QWidget" name="small_view">
      <widget class="QGroupBox" name="input_groupbox">
@@ -472,7 +472,7 @@ border: 1px solid grey;</string>
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>0</y>
+        <y>-1</y>
         <width>752</width>
         <height>444</height>
        </rect>
@@ -482,7 +482,7 @@ border: 1px solid grey;</string>
 border-bottom-color: rgba(255, 255, 255, 0);</string>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="input1_tab">
        <attribute name="title">
@@ -571,6 +571,438 @@ border: 1px solid grey;</string>
          <string/>
         </property>
        </widget>
+      </widget>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="page">
+     <widget class="QGroupBox" name="counts_groupbox">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>-3</y>
+        <width>231</width>
+        <height>111</height>
+       </rect>
+      </property>
+      <property name="title">
+       <string>Contagem</string>
+      </property>
+      <widget class="QLCDNumber" name="Slot_LCD">
+       <property name="geometry">
+        <rect>
+         <x>100</x>
+         <y>20</y>
+         <width>111</width>
+         <height>41</height>
+        </rect>
+       </property>
+       <property name="frameShape">
+        <enum>QFrame::NoFrame</enum>
+       </property>
+      </widget>
+      <widget class="QLabel" name="Slot_Label">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>20</y>
+         <width>211</width>
+         <height>41</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>8</pointsize>
+        </font>
+       </property>
+       <property name="frameShape">
+        <enum>QFrame::Box</enum>
+       </property>
+       <property name="text">
+        <string>Slot do Tapete:</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="DetectedApples_Label">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>60</y>
+         <width>211</width>
+         <height>41</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>8</pointsize>
+        </font>
+       </property>
+       <property name="frameShape">
+        <enum>QFrame::Box</enum>
+       </property>
+       <property name="text">
+        <string>Maçãs Detetadas:</string>
+       </property>
+      </widget>
+      <widget class="QLCDNumber" name="DetectedApples_LCD">
+       <property name="geometry">
+        <rect>
+         <x>100</x>
+         <y>60</y>
+         <width>111</width>
+         <height>41</height>
+        </rect>
+       </property>
+       <property name="frameShape">
+        <enum>QFrame::NoFrame</enum>
+       </property>
+      </widget>
+      <zorder>Slot_Label</zorder>
+      <zorder>DetectedApples_Label</zorder>
+      <zorder>DetectedApples_LCD</zorder>
+      <zorder>Slot_LCD</zorder>
+     </widget>
+     <widget class="QGroupBox" name="categories_groupbox">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>117</y>
+        <width>231</width>
+        <height>151</height>
+       </rect>
+      </property>
+      <property name="title">
+       <string>Categorias Detetadas</string>
+      </property>
+      <widget class="QLCDNumber" name="BigApples_LCD">
+       <property name="geometry">
+        <rect>
+         <x>100</x>
+         <y>20</y>
+         <width>111</width>
+         <height>41</height>
+        </rect>
+       </property>
+       <property name="frameShape">
+        <enum>QFrame::NoFrame</enum>
+       </property>
+      </widget>
+      <widget class="QLabel" name="BigApples_Label">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>20</y>
+         <width>211</width>
+         <height>41</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>8</pointsize>
+        </font>
+       </property>
+       <property name="frameShape">
+        <enum>QFrame::Box</enum>
+       </property>
+       <property name="text">
+        <string>Maçãs Grandes:</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="SmallApples_LCD_2">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>60</y>
+         <width>211</width>
+         <height>41</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>8</pointsize>
+        </font>
+       </property>
+       <property name="frameShape">
+        <enum>QFrame::Box</enum>
+       </property>
+       <property name="text">
+        <string>Maçãs Pequenas:</string>
+       </property>
+      </widget>
+      <widget class="QLCDNumber" name="SmallApples_LCD">
+       <property name="geometry">
+        <rect>
+         <x>100</x>
+         <y>60</y>
+         <width>111</width>
+         <height>41</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true"/>
+       </property>
+       <property name="frameShape">
+        <enum>QFrame::NoFrame</enum>
+       </property>
+      </widget>
+      <widget class="QLabel" name="BadApples_Label">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>100</y>
+         <width>211</width>
+         <height>41</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>8</pointsize>
+        </font>
+       </property>
+       <property name="frameShape">
+        <enum>QFrame::Box</enum>
+       </property>
+       <property name="text">
+        <string>Maçãs Defeituosas:</string>
+       </property>
+      </widget>
+      <widget class="QLCDNumber" name="BadApples_LCD">
+       <property name="geometry">
+        <rect>
+         <x>100</x>
+         <y>100</y>
+         <width>111</width>
+         <height>41</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true"/>
+       </property>
+       <property name="frameShape">
+        <enum>QFrame::NoFrame</enum>
+       </property>
+      </widget>
+      <zorder>BigApples_Label</zorder>
+      <zorder>SmallApples_LCD_2</zorder>
+      <zorder>SmallApples_LCD</zorder>
+      <zorder>BadApples_Label</zorder>
+      <zorder>BadApples_LCD</zorder>
+      <zorder>BigApples_LCD</zorder>
+     </widget>
+     <widget class="QGroupBox" name="detectionoutputs_groupbox">
+      <property name="geometry">
+       <rect>
+        <x>383</x>
+        <y>-3</y>
+        <width>368</width>
+        <height>447</height>
+       </rect>
+      </property>
+      <property name="title">
+       <string>Output de Deteção</string>
+      </property>
+      <widget class="QLabel" name="outputframe_5">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>20</y>
+         <width>368</width>
+         <height>207</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">background-color: rgb(255, 255, 255);
+border: 1px solid grey;</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+      <widget class="QLabel" name="outputframe_6">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>239</y>
+         <width>368</width>
+         <height>207</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">background-color: rgb(255, 255, 255);
+border: 1px solid grey;</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </widget>
+     <widget class="QGroupBox" name="control_groupbox">
+      <property name="geometry">
+       <rect>
+        <x>240</x>
+        <y>-3</y>
+        <width>134</width>
+        <height>111</height>
+       </rect>
+      </property>
+      <property name="title">
+       <string>Controlo</string>
+      </property>
+      <widget class="QPushButton" name="reset_BT">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>20</y>
+         <width>114</width>
+         <height>81</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true"/>
+       </property>
+       <property name="text">
+        <string>REINICIAR
+(Ctrl+R)</string>
+       </property>
+      </widget>
+     </widget>
+     <widget class="QGroupBox" name="log_groupbox">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>278</y>
+        <width>374</width>
+        <height>166</height>
+       </rect>
+      </property>
+      <property name="title">
+       <string>Log</string>
+      </property>
+      <widget class="QTextBrowser" name="Log_textBrowser">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>20</y>
+         <width>374</width>
+         <height>146</height>
+        </rect>
+       </property>
+       <property name="frameShape">
+        <enum>QFrame::Box</enum>
+       </property>
+       <property name="frameShadow">
+        <enum>QFrame::Sunken</enum>
+       </property>
+      </widget>
+     </widget>
+     <widget class="QGroupBox" name="statistics_groupbox">
+      <property name="geometry">
+       <rect>
+        <x>240</x>
+        <y>117</y>
+        <width>134</width>
+        <height>151</height>
+       </rect>
+      </property>
+      <property name="title">
+       <string>Estatísticas</string>
+      </property>
+      <widget class="QTextEdit" name="AverageDiameter_TextEdit">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>45</y>
+         <width>114</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="layoutDirection">
+        <enum>Qt::LeftToRight</enum>
+       </property>
+       <property name="inputMethodHints">
+        <set>Qt::ImhMultiLine</set>
+       </property>
+       <property name="frameShape">
+        <enum>QFrame::Box</enum>
+       </property>
+       <property name="frameShadow">
+        <enum>QFrame::Plain</enum>
+       </property>
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+       <property name="html">
+        <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p align=&quot;center&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="AverageDiameter_Label">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>20</y>
+         <width>111</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Diâmetro Médio:</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+      <widget class="QTextEdit" name="FalsePositives_TextEdit">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>110</y>
+         <width>114</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="layoutDirection">
+        <enum>Qt::LeftToRight</enum>
+       </property>
+       <property name="frameShape">
+        <enum>QFrame::Box</enum>
+       </property>
+       <property name="frameShadow">
+        <enum>QFrame::Plain</enum>
+       </property>
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+       <property name="html">
+        <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p align=&quot;center&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+       <property name="overwriteMode">
+        <bool>false</bool>
+       </property>
+       <property name="acceptRichText">
+        <bool>true</bool>
+       </property>
+      </widget>
+      <widget class="QLabel" name="FalsePositives_Label">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>85</y>
+         <width>111</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Falsos Positivos</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
       </widget>
      </widget>
     </widget>
@@ -679,6 +1111,7 @@ border: 1px solid grey;</string>
     </property>
     <addaction name="action_small_view"/>
     <addaction name="action_big_view"/>
+    <addaction name="action_operatorview"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuView"/>
@@ -776,6 +1209,15 @@ border: 1px solid grey;</string>
    </property>
    <property name="iconText">
     <string>Configuração</string>
+   </property>
+  </action>
+  <action name="action_operatorview">
+   <property name="icon">
+    <iconset>
+     <normaloff>icons/online-service.png</normaloff>icons/online-service.png</iconset>
+   </property>
+   <property name="text">
+    <string>Vista de Operador (Ctrl+End)</string>
    </property>
   </action>
  </widget>

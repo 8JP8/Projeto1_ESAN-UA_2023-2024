@@ -8,6 +8,7 @@ import configparser
 # ============ MODULES ============
 import modules.code_v1 as code_v1
 import modules.MathFunctions as MathFunctions
+import modules.LEDControl as LEDControl
 from main import update_config_value
 # ============= \\-// =============
 
@@ -22,10 +23,10 @@ CHESSBOARD_INTERSECTION_LINES = config.getint('CAMERA_CONFIG', 'CHESSBOARD_INTER
 CHESSBOARD_INTERSECTION_COLUMNS = config.getint('CAMERA_CONFIG', 'CHESSBOARD_INTERSECTION_COLUMNS')
 DRAW_CALIBRATION_LINES = config.getboolean('CAMERA_CONFIG', 'DRAW_CALIBRATION_LINES')
 
-def ImageProcessor(img_filepath, frame, detectionmode, categorizationmode, threshold1, threshold2, filter):
+def ImageProcessor(img_filepath, frame, detectionmode, categorizationmode, threshold1, threshold2, filter, customdetectionfilter):
     if os.path.isfile(img_filepath):
         if cv2.imread(img_filepath) is not None:
-            frame = code_v1.detect_and_classify_apples(frame, "image", detectionmode, categorizationmode, threshold1, threshold2, None)
+            frame = code_v1.detect_and_classify_apples(frame, "image", detectionmode, categorizationmode, threshold1, threshold2, None, customdetectionfilter)
             if APPLYFILTERS and filter!=None:
                 frame = ApplyFilters(frame, filter)
             return (True, frame)
@@ -35,14 +36,14 @@ def ImageProcessor(img_filepath, frame, detectionmode, categorizationmode, thres
         return(False, f"Erro: Imagem '{os.path.basename(img_filepath)}' não encontrada.")
         
 
-def VideoProcessor(vd_filepath, frame, detectionmode, categorizationmode, threshold1, threshold2, filter):
+def VideoProcessor(vd_filepath, frame, detectionmode, categorizationmode, threshold1, threshold2, filter, customdetectionfilter):
     if (currentvideopath == "") or (currentvideopath != vd_filepath):
         if os.path.isfile(vd_filepath):
             cap = cv2.VideoCapture(vd_filepath)
             if not cap.isOpened():
                 return (False, f"Erro: Não foi possível abrir o ficheiro '{os.path.basename(vd_filepath)}'.")
             else:
-                newframe = code_v1.detect_and_classify_apples(frame, "video", detectionmode, categorizationmode, threshold1, threshold2, None)
+                newframe = code_v1.detect_and_classify_apples(frame, "video", detectionmode, categorizationmode, threshold1, threshold2, None, customdetectionfilter)
                 if APPLYFILTERS and filter!=None:
                     newframe = ApplyFilters(newframe, filter)
                 return (True, newframe)
@@ -50,20 +51,20 @@ def VideoProcessor(vd_filepath, frame, detectionmode, categorizationmode, thresh
             return (False, f"Erro: Vídeo '{os.path.basename(vd_filepath)}' não encontrado.")
     else:
         try:
-            newframe = code_v1.detect_and_classify_apples(frame, "video", detectionmode, categorizationmode, threshold1, threshold2, None)
+            newframe = code_v1.detect_and_classify_apples(frame, "video", detectionmode, categorizationmode, threshold1, threshold2, None, customdetectionfilter)
             if APPLYFILTERS and filter!=None:
                 newframe = ApplyFilters(newframe, filter)
             return (True, newframe)
         except:
             return(False, f"Erro: Não foi possível abrir o ficheiro '{os.path.basename(vd_filepath)}'.")
         
-def CameraProcessor(inputframe, detectionmode, categorizationmode, threshold1, threshold2, filter):
+def CameraProcessor(inputframe, detectionmode, categorizationmode, threshold1, threshold2, filter, customdetectionfilter):
     calibresult = cameracalibrationprocessor(inputframe)
     if calibresult != None:
         inputframe = calibresult[1]
     # Detect and classify apples and update the frame
     try:
-        frame = code_v1.detect_and_classify_apples(inputframe, "camera", detectionmode, categorizationmode, threshold1, threshold2, calibresult)  
+        frame = code_v1.detect_and_classify_apples(inputframe, "camera", detectionmode, categorizationmode, threshold1, threshold2, calibresult, customdetectionfilter)  
     except Exception as e:
         print(e)
         frame = inputframe

@@ -10,13 +10,15 @@ import os
 # ============ MODULES ============
 import modules.MathFunctions as MathFunctions
 import modules.CustomDetection as customdetection
+import modules.AppleIndexation as AppleIndexation
 # ============= \\-// =============
 
 # ============= VARS =============
 
-# Criar objeto de configuração e ler o ficheiro
+# Create configuration object and read config file
 config = configparser.ConfigParser()
 config.read('config.ini')
+
 #output_dir = '../outputs'
 #os.makedirs(output_dir, exist_ok=True)
 
@@ -98,27 +100,35 @@ def calculate_iou(box1, box2):
 # Function to determine apple type (Big, Small, Bad)
 def determine_apple_type(pixel_caliber, diameter, categorization_confidence, threshold2):
     if categorization_confidence >= threshold2:
-        return "Bad Apple"
+        return "Defeituosa"
     elif categorization_confidence == -1:
         return "???"
     elif CAMERA_CALC_DIAMETER and not diameter == pixel_caliber:
         if diameter > DIAMETER_SEPARATION:
-            return "Big Apple"
+            return "Grande"
         else:
-            return "Small Apple"
+            return "Pequena"
     else:
         if pixel_caliber > PIXEL_SEPARATION:
-            return "Big Apple"
+            return "Grande"
         else:
-            return "Small Apple"
+            return "Pequena"
 
 # Function to perform apple detection and classification
-def detect_and_classify_apples(frame, type, detectionmode, categorizationmode, threshold1, threshold2, calibresult):
+def detect_and_classify_apples(frame, type, detectionmode, categorizationmode, threshold1, threshold2, calibresult, customdetectionfilter):
     THRESHOLD_1 = threshold1
     THRESHOLD_2 = threshold2
     DETECTIONMODE_VALUE = detectionmode
     CATEGORIZATIONMODE_VALUE = categorizationmode
     categorization_confidence = -1
+
+    #Photosensor configuration
+    global Use_Photosensor, SlotCounter, PhotoEletricState, Apple_Counted, Microcontroller_Communication_Error
+    Use_Photosensor = config.getboolean("IO_CONFIG", "USE_PHOTOSENSOR")
+    PhotoEletricState = True #Sensor not blocked
+    SlotCounter = 0
+    Microcontroller_Communication_Error = False
+    #Apple_Counted = 0
 
     apple_boxes = []
     apple_certainties = []
@@ -129,7 +139,7 @@ def detect_and_classify_apples(frame, type, detectionmode, categorizationmode, t
 
     if DETECTIONMODE_VALUE == 2:
         inputframe = frame
-        result = customdetection.detect(inputframe, type)
+        result = customdetection.detect(inputframe, type, customdetectionfilter)
         frame = result[0]
         circles = result[1]
 
@@ -188,18 +198,33 @@ def detect_and_classify_apples(frame, type, detectionmode, categorizationmode, t
                 # Placeholder values:
                 diameter = r*2
 
-            timestamp = datetime.datetime.now().strftime("%Y-%m-d %H:%M:%S")
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
             apple_type = determine_apple_type(r*2, diameter, categorization_confidence, threshold2)
-            # Log the apple's data
-            with open(LOG_FILE_PATH, 'a') as log:
-                if CAMERA_CALC_DIAMETER or type != 'camera':
-                    log.write(f"{timestamp},{apple_type},{diameter}cm\n")
-                else:
-                    log.write(f"{timestamp},{apple_type},{round(r*2)}px\n")
-            apple_boxes.append((x, y, r*2, r*2))
-            apple_certainties.append(categorization_confidence)
-            apple_diameters.append(diameter)
+            if Use_Photosensor and not Microcontroller_Communication_Error:
+                try:
+                    if type == "camera":
+                        sensor_updater = AppleIndexation.SensorUpdater(config.get("IO_CONFIG", "MICROCONTROLLER_PORT"))
+                        sensor_updater.start()
+                        SlotCounter, PhotoEletricState = AppleIndexation.get_sensor_value(apple_type, diameter)
+                    # Log the apple's data
+                    with open(LOG_FILE_PATH, 'a') as log:
+                        if CAMERA_CALC_DIAMETER and (type == "camera"):
+                            log.write(f"{timestamp} - Posição {str(SlotCounter)} - {apple_type},{diameter}cm\n")
+                        elif not CAMERA_CALC_DIAMETER and (type == "camera"):
+                            log.write(f"{timestamp} - Posição {str(SlotCounter)} - {apple_type},{round(r*2)}px\n")
+                        else:
+                            log.write(f"{timestamp} - {apple_type},{round(r*2)}px\n")
+                except:
+                    SlotCounter = "Erro do Microcontrolador"
+                    Microcontroller_Communication_Error = True
+            else:
+                # Log the apple's data
+                with open(LOG_FILE_PATH, 'a') as log:
+                    if CAMERA_CALC_DIAMETER and (type == "camera"):
+                        log.write(f"{timestamp} - {apple_type},{diameter}cm\n")
+                    else:
+                        log.write(f"{timestamp} - {apple_type},{round(r*2)}px\n")
             
             # Draw text in the center of the detected apple
             if CAMERA_CALC_DIAMETER and (type == "camera"):
@@ -209,6 +234,10 @@ def detect_and_classify_apples(frame, type, detectionmode, categorizationmode, t
             text_size, _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.8, 2)
             text_x = int(x - text_size[0]/2)
             text_y = int(y + text_size[1]/2)
+
+            apple_boxes.append((x, y, r*2, r*2))
+            apple_certainties.append(categorization_confidence)
+            apple_diameters.append(diameter)
             if categorization_confidence >= THRESHOLD_2:
                 color = (255, 0, 0)  # Red if rotten categorization_confidence > THRESHOLD_2
             else:
@@ -315,22 +344,38 @@ def detect_and_classify_apples(frame, type, detectionmode, categorizationmode, t
 
                             # Determine apple type
                             apple_type = determine_apple_type(pixel_caliber, diameter, categorization_confidence, threshold2)
-
-                            timestamp = datetime.datetime.now().strftime("%Y-%m-d %H:%M:%S")
-
-                            # Log the apple's data
-                            with open(LOG_FILE_PATH, 'a') as log:
-                                if CAMERA_CALC_DIAMETER and (type == "camera"):
-                                    log.write(f"{timestamp},{apple_type},{diameter}cm\n")
-                                else:
-                                    log.write(f"{timestamp},{apple_type},{pixel_caliber}px\n")
+                            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                            if Use_Photosensor and not Microcontroller_Communication_Error:
+                                try:
+                                    if type == "camera":
+                                        sensor_updater = AppleIndexation.SensorUpdater(config.get("IO_CONFIG", "MICROCONTROLLER_PORT"))
+                                        sensor_updater.start()
+                                        SlotCounter, PhotoEletricState = AppleIndexation.get_sensor_value(apple_type, diameter)
+                                    # Log the apple's data
+                                    with open(LOG_FILE_PATH, 'a') as log:
+                                        if CAMERA_CALC_DIAMETER and (type == "camera"):
+                                            log.write(f"{timestamp} - Posição {str(SlotCounter)} - {apple_type},{diameter}cm\n")
+                                        elif not CAMERA_CALC_DIAMETER and (type == "camera"):
+                                            log.write(f"{timestamp} - Posição {str(SlotCounter)} - {apple_type},{pixel_caliber}px\n")
+                                        else:
+                                            log.write(f"{timestamp} - {apple_type},{pixel_caliber}px\n")
+                                except:
+                                    SlotCounter = "Erro do Microcontrolador"
+                                    Microcontroller_Communication_Error = True
+                            else:
+                                # Log the apple's data
+                                with open(LOG_FILE_PATH, 'a') as log:
+                                    if CAMERA_CALC_DIAMETER and (type == "camera"):
+                                        log.write(f"{timestamp} - {apple_type},{diameter}cm\n")
+                                    else:
+                                        log.write(f"{timestamp} - {apple_type},{pixel_caliber}px\n")
                             apple_boxes.append((x, y, w, h))
                             apple_certainties.append(categorization_confidence)
                             apple_diameters.append(diameter)
                             
 
                             # Draw text in the center of the detected apple
-                            if CAMERA_CALC_DIAMETER:
+                            if CAMERA_CALC_DIAMETER and (type == "camera"):
                                 text = f"Diametro: {diameter}cm | {apple_type}"
                             else:
                                 text = f"Largura: {pixel_caliber}px | {apple_type}"

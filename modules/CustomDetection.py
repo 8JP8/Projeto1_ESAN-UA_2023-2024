@@ -11,33 +11,8 @@ class Filterobject:
     def __init__(self):
         self.values = {}
     
-global customdetectionfilter
-
-try:
-    from main import customdetectionfilter
-    ex = None
-except Exception as ex:
-    config.read('config.ini')  # Replace 'config.ini' with the path to your configuration file
-
-    customdetectionfilter = Filterobject()
-    customdetectionfilter.minhue = config.getint('FILTER_CONFIG','inputfilters_min_hue')
-    customdetectionfilter.maxhue = config.getint('FILTER_CONFIG','inputfilters_max_hue')
-    customdetectionfilter.minsat = config.getint('FILTER_CONFIG','inputfilters_min_saturation')
-    customdetectionfilter.maxsat = config.getint('FILTER_CONFIG','inputfilters_max_saturation')
-    customdetectionfilter.minval = config.getint('FILTER_CONFIG','inputfilters_min_value')
-    customdetectionfilter.maxval = config.getint('FILTER_CONFIG','inputfilters_max_value')
-    customdetectionfilter.sat_addsub = config.getint('FILTER_CONFIG','inputfilters_saturation_booster')
-    customdetectionfilter.val_addsub = config.getint('FILTER_CONFIG','inputfilters_value_booster')
-    customdetectionfilter.gaussianblur = config.getint('FILTER_CONFIG','inputfilters_gaussian_blur')
-    customdetectionfilter.blurkernelsize = config.getint('FILTER_CONFIG', 'inputfilters_blur_kernelsize')
-    customdetectionfilter.kernelsize = config.getint('FILTER_CONFIG','inputfilters_kernelsize')
-    customdetectionfilter.erode1 = config.getint('FILTER_CONFIG','inputfilters_erode1')
-    customdetectionfilter.dilate1 = config.getint('FILTER_CONFIG','inputfilters_dilate1')
-    customdetectionfilter.erode2 = config.getint('FILTER_CONFIG', 'inputfilters_erode2')
-    customdetectionfilter.dilate2 = config.getint('FILTER_CONFIG', 'inputfilters_dilate2')
-    # ======================== \\-// ========================
-
 def config_color_ranges():
+
     config.read('config.ini')  # Replace 'config.ini' with the path to your configuration file
     # Defining the color ranges to be filtered.
     low_apple_red = literal_eval(config.get('CUSTOM_DETECTION_CONFIG', 'low_apple_red'))
@@ -66,15 +41,19 @@ def is_circle_inside_another(circles, new_circle, tolerance=10):
             return True
     return False
 
-def detect(src_img, type):
+def detect(src_img, type, customdetectionfilter):
     if customdetectionfilter is None:
         print("Erro: Falha ao carregar os filtros.")
         return ("Erro", "filtros")
     else:
         color_ranges = config_color_ranges()
         image = src_img.copy()
-        image_hsv = cv2.cvtColor(src_img, cv2.COLOR_BGR2HSV)
-        
+        #cv2.imwrite("Original image.png", src_img)
+        if type == "test_type":
+            image_hsv = cv2.cvtColor(src_img, cv2.COLOR_BGR2HSV)
+        else:
+            image_hsv = cv2.cvtColor(src_img, cv2.COLOR_RGB2HSV)
+
         mask_red = cv2.inRange(image_hsv, convert_hsv_inputs(color_ranges[0]), convert_hsv_inputs(color_ranges[1]))
         mask_red_raw = cv2.inRange(image_hsv, convert_hsv_inputs(color_ranges[2]), convert_hsv_inputs(color_ranges[3]))
         mask_golden = cv2.inRange(image_hsv, convert_hsv_inputs(color_ranges[4]), convert_hsv_inputs(color_ranges[5]))
@@ -150,10 +129,30 @@ def detect(src_img, type):
             '''
             cv2.waitKey(0)
         else:
-            if ex is not None:
-                print(ex)
             return (image, circles)
         
 if __name__ == '__main__':
     src_img = cv2.imread("C:/Users/JP/Downloads/image-asset.jpeg")
-    detect(src_img, "test_type")
+
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    config.read('../config.ini')  # Replace 'config.ini' with the path to your configuration file
+    customdetectionfilter = Filterobject()
+    customdetectionfilter.minhue = config.getint('FILTER_CONFIG','inputfilters_min_hue')
+    customdetectionfilter.maxhue = config.getint('FILTER_CONFIG','inputfilters_max_hue')
+    customdetectionfilter.minsat = config.getint('FILTER_CONFIG','inputfilters_min_saturation')
+    customdetectionfilter.maxsat = config.getint('FILTER_CONFIG','inputfilters_max_saturation')
+    customdetectionfilter.minval = config.getint('FILTER_CONFIG','inputfilters_min_value')
+    customdetectionfilter.maxval = config.getint('FILTER_CONFIG','inputfilters_max_value')
+    customdetectionfilter.hue_addsub = config.getint('FILTER_CONFIG','inputfilters_hue_modifier')
+    customdetectionfilter.sat_addsub = config.getint('FILTER_CONFIG','inputfilters_saturation_modifier')
+    customdetectionfilter.val_addsub = config.getint('FILTER_CONFIG','inputfilters_value_modifier')
+    customdetectionfilter.gaussianblur = config.getint('FILTER_CONFIG','inputfilters_gaussian_blur')
+    customdetectionfilter.blurkernelsize = config.getint('FILTER_CONFIG', 'inputfilters_blur_kernelsize')
+    customdetectionfilter.kernelsize = config.getint('FILTER_CONFIG','inputfilters_kernelsize')
+    customdetectionfilter.erode1 = config.getint('FILTER_CONFIG','inputfilters_erode1')
+    customdetectionfilter.dilate1 = config.getint('FILTER_CONFIG','inputfilters_dilate1')
+    customdetectionfilter.erode2 = config.getint('FILTER_CONFIG', 'inputfilters_erode2')
+    customdetectionfilter.dilate2 = config.getint('FILTER_CONFIG', 'inputfilters_dilate2')
+    customdetectionfilter.dilate_erode_post_apply = config.getboolean('FILTER_CONFIG', 'inputfilters_post-apply_dilate_and_erode')
+    # ======================== \\-// ========================
+    detect(src_img, "test_type", customdetectionfilter)
