@@ -42,7 +42,7 @@ python python main.py
 Esta aplicação é projetada para o controle de qualidade de maçãs, utilizando a detecção e subsequente classificação com base no tamanho e estado (Grande/Pequena/Defeituosa). Ela detecta maçãs pela cor ou, alternativamente, pela detecção de objetos usando um modelo YOLO treinado com o conjunto de dados COCO. Além disso, classifica as maçãs como defeituosas usando um modelo KERAS pré-treinado com um conjunto de dados de maçãs podres e boas.
 
 ### Tecnologias Utilizadas
-- Python
+- Python 3.10
 - OpenCV
 - Keras
 - PyQt6
