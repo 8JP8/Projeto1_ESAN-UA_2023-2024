@@ -1,6 +1,6 @@
-from PyQt6.QtWidgets import QApplication, QMainWindow, QMessageBox, QFileDialog, QApplication, QPushButton, QVBoxLayout, QLabel, QDialog, QWidget, QTabWidget,  QVBoxLayout, QGraphicsDropShadowEffect, QSizePolicy, QLCDNumber
+from PyQt6.QtWidgets import QApplication, QMainWindow, QMessageBox, QFileDialog, QApplication, QPushButton, QVBoxLayout, QLabel, QDialog, QWidget, QVBoxLayout, QGraphicsDropShadowEffect, QSizePolicy
 from PyQt6.uic import loadUi
-from PyQt6.QtCore import pyqtSignal, Qt, QPropertyAnimation, QSize, QTimer, QThread, QMetaObject, Q_ARG
+from PyQt6.QtCore import pyqtSignal, Qt, QPropertyAnimation, QSize, QTimer, QThread, QMetaObject, Q_ARG, Qt, QObject, pyqtSignal, QFile, QIODevice
 from PyQt6.QtGui import QImage, QPixmap, QIcon, QCloseEvent, QAction, QKeySequence, QShortcut, QPalette, QColor, QMovie, QGuiApplication
 import numpy as np
 import threading
@@ -129,6 +129,18 @@ class MyApp(QMainWindow):                     # GUI CLASS
         self.video_writer = None
         self.video_writer2 = None
         # ============ \\-// ============
+
+        self.logFileReader = LogFileReader()
+        self.logFileReader.logUpdated.connect(self.updateLogText)
+        self.readLogFile()
+
+    def readLogFile(self):
+        self.logFileReader.readLogFile()
+
+    def updateLogText(self, content):
+        current_content = self.Log_textBrowser.toPlainText()
+        if content != current_content:
+            self.Log_textBrowser.setPlainText(content)
 
     def createShortcut(self, key_sequence, slot_function):
         shortcut = key_sequence
@@ -275,6 +287,7 @@ class MyApp(QMainWindow):                     # GUI CLASS
         self.cameracapture_to_gui()
     def recording_thread(self):
         self.frame_record()
+
     # ========================== \\--// ==========================
      
     def set_video(self, video):
@@ -417,30 +430,16 @@ class MyApp(QMainWindow):                     # GUI CLASS
         self.BadApples_LCD.display(bad_apple_count)
         total_apple_count = big_apple_count + small_apple_count + bad_apple_count
         self.DetectedApples_LCD.display(big_apple_count+small_apple_count+bad_apple_count)
-        WorkerThread.set_initial_values(self, false_positives, diameter_sum / total_apple_count if total_apple_count != 0 else 0.0)  
-
-    def start_operator_ui_thread(self):
-        self.worker_thread = WorkerThread()
-        self.worker_thread.update_signal.connect(self.update_operator_ui)
-        self.worker_thread.start()
-
-    def update_operator_ui(self, false_positives, average_diameter):
-        self.FalsePositives_TextEdit.setHtml(f"<div align='center'>{false_positives}</div>")
-        self.AverageDiameter_TextEdit.setHtml(f"<div align='center'>{average_diameter}</div>")
-
-        #print("updated")
+        QMetaObject.invokeMethod(self.FalsePositives_TextEdit, "setHtml",
+                                 Qt.ConnectionType.QueuedConnection,
+                                 Q_ARG(str, "<div align='center'>{}</div>".format(false_positives)))
+        QMetaObject.invokeMethod(self.AverageDiameter_TextEdit, "setHtml",
+                                 Qt.ConnectionType.QueuedConnection,
+                                 Q_ARG(str, "<div align='center'>{}</div>".format(diameter_sum / total_apple_count if total_apple_count != 0 else 0.0)))
         #Updates with LogFile
-        try:
-            with open(LOG_FILE_PATH, 'r') as file:
-                content = file.read()
-                if content != log_file_content:
-                    self.Log_textBrowser.setPlainText(str(content))
-        except Exception as e:
-            self.Log_textBrowser.setPlainText(f"Erro de Leitura do Ficheiro de Log: {str(e)}") 
-            print(f"Erro de Leitura do Ficheiro de Log: {str(e)}") 
+        self.logFileReader.readLogFile()
 
     def start_cameracapture(self):
-        self.start_operator_ui_thread()
         import modules.LEDControl as LEDControl
             
         self.nextframe_BT.setText("CONGELAR (C)")
@@ -1079,24 +1078,17 @@ def update_config_value(tab, var, val):
     with open('config.ini', 'w') as config_file:
         config.write(config_file)
 
-class WorkerThread(QThread):
-    update_signal = pyqtSignal(int, float)
+class LogFileReader(QObject):
+    logUpdated = pyqtSignal(str)
 
-    def __init__(self):
-        super().__init__()
-        self.false_positives = 0
-        self.average_diameter = 0.0
-
-    def set_initial_values(self, false_positives, average_diameter):
-        self.false_positives = false_positives
-        self.average_diameter = average_diameter
-
-    def run(self):
-        # Simulate some work in the background
-        while True:
-            # Update UI with the current values
-            self.update_signal.emit(self.false_positives, self.average_diameter)
-            self.sleep(100)  # Simulate some processing time
+    def readLogFile(self):
+        try:
+            with open(LOG_FILE_PATH, 'r') as file:
+                content = file.read()
+                self.logUpdated.emit(content)
+        except Exception as e:
+            self.logUpdated.emit(f"Erro de Leitura do Ficheiro de Log: {str(e)}")
+            print(f"Erro de Leitura do Ficheiro de Log: {str(e)}")
 
 # =========================== \\---// ===========================
 class Filter:
