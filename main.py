@@ -60,6 +60,9 @@ class MyApp(QMainWindow):                     # GUI CLASS
         elif DETECTIONMODE == 2:
             self.threshold1_SLIDER.setValue(config.getint('CUSTOM_DETECTION_CONFIG', 'threshold1_value'))
             self.threshold2_SLIDER.setValue(config.getint('CUSTOM_DETECTION_CONFIG', 'threshold2_value'))
+        if config.getboolean('CAMERA_CONFIG', 'USE_TWO_CAMERAS'):
+            self.cam2_RADIOBT.setEnabled(False)
+            
         # ============================= \\-// ============================
 
         # ============ BINDS ============
