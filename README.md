@@ -23,7 +23,7 @@ This application is designed for quality control of apples, utilizing detection 
 
 2. Install the required dependencies using the following command:
 ```
-pip install numpy opencv-python keras pyqt6 configmanager pyserial
+pip install numpy opencv-python keras pyqt6 configmanager pyserial tensorflow
 ```
 
 3. Download the SourceCode and put the models.zip content (downloaded from the releases) inside the modules folder.
@@ -63,7 +63,7 @@ Esta aplicação é projetada para o controle de qualidade de maçãs, utilizand
 
 2. Instale as dependências necessárias usando o seguinte comando:
 ```
-pip install numpy opencv-python keras pyqt6 configmanager pyserial
+pip install numpy opencv-python keras pyqt6 configmanager pyserial tensorflow
 ```
 
 3. Faça download do sourcecode e do models.zip (disponível nas releases) e coloque o conteúdo na pasta modules.
