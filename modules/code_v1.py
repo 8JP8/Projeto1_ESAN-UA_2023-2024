@@ -1,7 +1,8 @@
 import cv2
 import numpy as np
 from keras.models import load_model
-from keras.preprocessing.image import img_to_array
+#from keras.preprocessing.image import img_to_array
+from tensorflow.keras.utils import img_to_array
 from keras.applications.mobilenet_v2 import preprocess_input
 import configparser
 import datetime
